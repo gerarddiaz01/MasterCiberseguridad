@@ -1,7 +1,3 @@
-Excelente, he recibido ambos documentos. A continuación, te presento el informe detallado sobre el *sniffing* de redes y las herramientas Wireshark, `tcpdump` y `tshark`, incluyendo las explicaciones paso a paso de los comandos y la sincronización con los pantallazos.
-
------
-
 # Análisis del Tráfico de Red: Sniffing y Herramientas Esenciales (Wireshark, TCPdump, Tshark)
 
 El **sniffing de redes** es una técnica fundamental en ciberseguridad que implica la captura y el monitoreo del tráfico que viaja a través de una red. Aunque a menudo se asocia con actividades maliciosas como el espionaje, también es una herramienta indispensable para administradores de red y analistas de seguridad para diagnosticar problemas de red, verificar la configuración y detectar actividades maliciosas. Al realizar *sniffing*, se capturan los **paquetes de datos** que se transmiten en la red, incluyendo su **payload** (los datos en sí) y las múltiples **cabeceras** que indican el origen, destino y tipo de información.

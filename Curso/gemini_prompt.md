@@ -46,7 +46,7 @@ Te voy a subir dos documentos pdf:
 
 El transcript en pdf dónde se explica XXXX. Se llama "XXXX".
 
-Un PDF con pantallazos ordenados cronológicamente que corresponden al transcript anterior en la cual se explica XXXX. El pdf con pantallazos puede mostrarte la terminal y la maquina paso a paso acorde con el transcript, puedes fácilmente sincronizar los contenidos de ambos documentos, y puede contener también pantallazos de las diapositivas de teoria para enriquecer el informe. Se llama "XXXX".
+Un PDF con pantallazos ordenados cronológicamente que corresponden al transcript anterior en la cual se explica XXXX. El pdf con pantallazos te muestra la terminal y la maquina paso a paso acorde con el transcript, puedes fácilmente sincronizar los contenidos de ambos documentos, y contiene también pantallazos de las diapositivas de teoria para enriquecer el informe. Se llama "XXXX".
 
 Necesito que:
 
