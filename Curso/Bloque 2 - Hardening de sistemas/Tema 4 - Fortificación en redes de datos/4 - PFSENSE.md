@@ -76,11 +76,11 @@ Después de la instalación, la máquina virtual de PFSense mostrará una pantal
 
 ## 4\. Gestión de PFSense a Través de la Interfaz Web (Dashboard)
 
-La mayor parte de la configuración y gestión de PFSense se realiza a través de su interfaz web (*Dashboard*) desde una máquina remota de la red interna.
+La mayor parte de la configuración y gestión de PFSense se realiza a través de su interfaz web (*Dashboard*) desde una máquina remota de la red interna. En mi caso, al hacer las pruebas en maquinas virtuales, tuve que poner los adaptadores de red de la maquina de pfsense en NAT para la conexión a internet (WAN) y en red interna el segundo adaptador (LAN) para que la máquina de ubuntu desktop pueda acceder a pfsense. Luego en la maquina de ubuntu desktop con conexión a pfsense le puse sólo un adaptador de red en red interna, la misma LAN que pfsense, y pfsense da internet a dicho ubuntu directamente.
 
 ### 4.1. Acceso al Dashboard
 
-1.  **Obtener la IP de la Interfaz LAN de PFSense**: Esta IP es la que actúa como gestor y punto de enrutamiento para toda la información. Se puede ver en la consola de PFSense o es la IP que asigna por defecto a la interfaz LAN.
+1.  **Obtener la IP de la Interfaz LAN de PFSense**: Esta IP es la que actúa como gestor y punto de enrutamiento para toda la información. Se puede ver en la consola de PFSense o es la IP que asigna por defecto a la interfaz LAN. Normalmente es 192.168.1.1
 2.  **Acceder desde el Navegador**: Abre un navegador web en una de las máquinas virtuales Linux (Ubuntu Desktop) de la red interna y escribe la dirección IP de la interfaz LAN de PFSense.
 3.  **Credenciales Iniciales**: La contraseña por defecto para el acceso web es `pfsense`. Se recomienda cambiarla inmediatamente después del primer acceso.
 
