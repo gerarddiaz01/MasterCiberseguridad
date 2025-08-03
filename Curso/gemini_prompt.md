@@ -1,101 +1,111 @@
 # Teoria + Terminal Screenshots pdf
 
-Hola, quiero que actúes como un experto en ciberseguridad y un profesional de la organización de información, y experto en transmitir conocimientos a estudiantes aprendiendo.
+Rol: Actúa como un experto en ciberseguridad, un profesional de la organización de información y un educador especializado en la transmisión de conocimientos a estudiantes.
 
-Aqui tienes varios documentos:
+Documentos de Referencia:
+Se te proporcionarán los siguientes documentos en formato PDF para la elaboración del informe:
 
-El transcript en pdf dónde se explica XXXX. Se llama "XXXX".
+"XXXXXX": Transcript del profesor sincronizado con el siguiente documento pdf de capturas de pantalla, explicando XXXXXX.
 
-Un PDF con pantallazos ordenados cronológicamente que corresponden al transcript anterior en la cual se explica XXXX. El pdf con pantallazos te muestra la terminal y la maquina paso a paso acorde con el transcript, y puede contener también pantallazos de las diapositivas de teoria para enriquecer el informe, puedes fácilmente sincronizar los contenidos de ambos documentos. En dichas imágenes hay paso a paso de manera cronológica la interacción en la terminal acorde con el transcript, es importante explicar los comandos utilizados y su sintaxis, y lograr sincronizar las imágenes del pdf con el contenido del transcript para máxima eficacia. Se llama "XXXX".
+"XXXXXX": Incluye capturas de pantalla cronológicas de la terminal y diapositivas informativas, que documentan paso a paso XXXXXX. Estas imágenes están sincronizadas con las transcripciones y cada una lleva una breve explicación para un contexto adicional.
 
-Necesito que hagas un informe de la siguiente manera:
+Tarea Principal:
+Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Quiero que, usando los transcript y el pdf con los pantallazos como apoyo (dichos pantallazos están en forma cronológica al texto y van acorde con el transcript) hagas lo siguiente. Que leas y estructures toda la información relevante sobre XXXX.
+Contenido Específico del Informe:
 
-Por favor, estructura y organiza esta información en formato Markdown, en castellano, utilizando una estructura clara, informativa y visualmente atractiva. Incluye lo siguiente:
+Estructura y organiza toda la información relevante sobre XXXXXX.
 
-- Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica y fácil de seguir.
+Explica paso a paso todas las pruebas realizadas y los comandos ejecutados.
 
-- Listas: Emplea listas con viñetas para desglosar conceptos y ejemplos.
+Detalla los conceptos aprendidos.
 
-- Tablas Markdown: Utiliza tablas si consideras que la información se beneficia de una presentación tabular para mayor claridad y comparación (ej. Tipos de Malware con sus características principales, o Motivaciones de Atacantes con ejemplos).
+Todo lo anterior debe ser explicado utilizando toda la información de los documentos proporcionados, ambos transcripts y el pdf con los screenshots de la terminal.
 
-- Negrita: Usa negritas para destacar términos clave y conceptos importantes.
+Directrices de Estilo y Formato:
 
-- Explicación de forma clara y paso a paso la sintaxis de cada comando usado en la terminal, explicando cada paso de forma exhaustiva el porqué de una acción el cómo y el objetivo.
+Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica, clara y fácil de seguir.
 
-Directrices de Contenido y Estilo:
+Listas: Emplea listas con viñetas para desglosar conceptos y ejemplos.
 
-- Rico en Información: El informe debe ser exhaustivo, no demasiado simplificado, y capturar la esencia y detalles técnicos de los apuntes.
+Tablas Markdown: Utiliza tablas si consideras que la información se beneficia de una presentación tabular para mayor claridad y comparación.
 
-- Vocabulario Técnico Consistente: Mantén el vocabulario técnico de ciberseguridad original, especialmente los términos en inglés de la jerga de ciberseguridad como Bug Bounty, Exploit, 0-day, DevSecOps, SSDLC, Data Leaks, Ransomware, Phishing, Insider, APT, DDoS, Malware, etc. Conserva estos términos en inglés aunque el texto principal esté en español.
+Negrita: Usa negritas para destacar términos clave y conceptos importantes.
 
-- Agrupación Lógica: Agrupa la información relacionada para evitar redundancias y mejorar la claridad y el flujo del documento.
+Explicación de Comandos: Para cada comando de terminal, explica de forma clara y exhaustiva su sintaxis, cada uno de sus elementos, el porqué de la acción, el cómo se realiza y su objetivo. Es crucial no incluir el usuario de la terminal (ej., user@singular1).
 
-- Comandos de la terminal: Si hay screenshots de una terminal hay que explicar cada uno de los comandos y todos los elementos que hay en dicho comando. Importante: no incluir el usuario de la terminal (ej. `user@singular1`) porque es una terminal de ejemplo y el usuario no nos interesa.
+Riqueza Informativa: El informe debe ser exhaustivo, técnico y capturar la esencia y los detalles técnicos de los apuntes sin simplificaciones excesivas.
 
-- Asegúrate de que sea fácil de entender para repasar el contenido de la clase sin necesidad de volver a ver el vídeo.
+Vocabulario Técnico Consistente: Mantén el vocabulario técnico de ciberseguridad original, conservando los términos en inglés de la jerga (ej., Bug Bounty, Exploit, 0-day, DevSecOps, SSDLC, Data Leaks, Ransomware, Phishing, Insider, APT, DDoS, Malware, etc.), incluso si el texto principal está en español.
 
-- Desarrollo/Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
+Agrupación Lógica: Agrupa la información relacionada para evitar redundancias y mejorar la claridad y el flujo del documento.
 
-- Eliminación de Elementos Externos: Elimina cualquier etiqueta de cita () o referencias a grabaciones/fuentes externas que puedan aparecer en el texto original (ej. ``, Transcribed on... by Minutes Al, These notes were taken with Minutes Al (https://myminutes.ai)). 
+Comprensibilidad: El informe debe ser fácil de entender, permitiendo repasar el contenido de la clase sin necesidad de volver a ver el vídeo original.
 
-- No incluyas ninguna cita o referencia a los documentos de fuentes utilizados. Ejemplo: (cite: 139).
+Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
 
-- Sin Contenedores Externos: NO pongas el resultado en un canvas, un documento inmersivo ni ningún otro tipo de contenedor o entorno específico. Quiero el texto Markdown directamente.
+Eliminación de Elementos Externos: No incluyas citas o referencias a las fuentas, y elimina cualquier etiqueta de cita o referencias a grabaciones/fuentes externas que puedan aparecer en el texto original (ej., ([cite: 139], [cite_start]), "Transcribed on... by Minutes Al", "These notes were taken with Minutes Al (https://myminutes.ai)").
 
--------------------------------------------
+Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningún tipo de contenedor (canvas, documento inmersivo, etc.).
 
-Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas.
+---------------------------------------
+
+
+Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
 
 ----------------------------------------
+
 
 # Teoria + Diapositivas pdf
 
 
-Hola, quiero que actúes como un experto en ciberseguridad y un profesional de la organización de información, y experto en transmitir conocimientos a estudiantes aprendiendo.
+Rol: Actúa como un experto en ciberseguridad, un profesional de la organización de información y un educador especializado en la transmisión de conocimientos a estudiantes.
 
-Aqui tienes varios documentos:
+Documentos de Referencia:
+Se te proporcionarán los siguientes documentos en formato PDF para la elaboración del informe:
 
-El transcript en pdf dónde se explica XXXXXX. Se llama "XXXXXX".
+"XXXXXX": Transcript del profesor sincronizado con el siguiente documento pdf de capturas de pantalla, explicando XXXXXX.
 
-Un PDF con pantallazos ordenados cronológicamente que corresponden al transcript anterior en la cual se explica XXXXXX. El pdf con pantallazos te muestra imágenes, en las cuales hay paso a paso de manera cronológica con el transcript las diapositivas de los apuntes, y hay que lograr sincronizar las imágenes del pdf con el contenido del transcript para máxima eficacia y poder enriquecer el informe al máximo. Se llama "XXXXX".
+"XXXXXX": Incluye screenshots ordenados cronológicamente que documentan paso a paso XXXXXX. Estas imágenes están sincronizadas con el transcript anterior, el profesor explica éstas diapositivas.
 
-Necesito que hagas un informe de la siguiente manera:
+Tarea Principal:
+Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Quiero que, usando los transcript y el pdf con los pantallazos como apoyo (dichos pantallazos están en forma cronológica al texto y van acorde con el transcript) hagas lo siguiente. Quiero que leas y estructures toda la información relevante sobre XXXXXX. En el transcript hay mucha información que puedes utilizar, pero si ves que puedes expandir en algunos puntos no dudes en hacerlo, quiero el máximo de información posible para entenderlo todo perfectamente.
+Contenido Específico del Informe:
 
-Por favor, estructura y organiza esta información en formato Markdown, en castellano, utilizando una estructura clara, informativa y visualmente atractiva. Incluye lo siguiente:
+Estructura y organiza toda la información relevante sobre XXXXXX.
 
-- Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica y fácil de seguir.
+Detalla los conceptos aprendidos.
 
-- Listas: Emplea listas con viñetas para desglosar conceptos y ejemplos.
+Todo lo anterior debe ser explicado utilizando toda la información de los documentos proporcionados.
 
-- Tablas Markdown: Utiliza tablas si consideras que la información se beneficia de una presentación tabular para mayor claridad y comparación (ej. Tipos de Malware con sus características principales, o Motivaciones de Atacantes con ejemplos).
+Directrices de Estilo y Formato:
 
-- Negrita: Usa negritas para destacar términos clave y conceptos importantes.
+Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica, clara y fácil de seguir.
 
-- Explicación de forma clara y paso a paso la sintaxis de cada comando usado en la terminal, explicando cada paso de forma exhaustiva el porqué de una acción el cómo y el objetivo.
+Listas: Emplea listas con viñetas para desglosar conceptos y ejemplos.
 
-Directrices de Contenido y Estilo:
+Tablas Markdown: Utiliza tablas si consideras que la información se beneficia de una presentación tabular para mayor claridad y comparación.
 
-- Rico en Información: El informe debe ser exhaustivo, no demasiado simplificado, y capturar la esencia y detalles técnicos de los apuntes.
+Negrita: Usa negritas para destacar términos clave y conceptos importantes.
 
-- Vocabulario Técnico Consistente: Mantén el vocabulario técnico de ciberseguridad original, especialmente los términos en inglés de la jerga de ciberseguridad como Bug Bounty, Exploit, 0-day, DevSecOps, SSDLC, Data Leaks, Ransomware, Phishing, Insider, APT, DDoS, Malware, etc. Conserva estos términos en inglés aunque el texto principal esté en español.
+Explicación de Comandos: Para cada comando de terminal, explica de forma clara y exhaustiva su sintaxis, cada uno de sus elementos, el porqué de la acción, el cómo se realiza y su objetivo. Es crucial no incluir el usuario de la terminal (ej., user@singular1).
 
-- Agrupación Lógica: Agrupa la información relacionada para evitar redundancias y mejorar la claridad y el flujo del documento.
+Riqueza Informativa: El informe debe ser exhaustivo, técnico y capturar la esencia y los detalles técnicos de los apuntes sin simplificaciones excesivas.
 
-- Asegúrate de que sea fácil de entender para repasar el contenido de la clase sin necesidad de volver a ver el vídeo.
+Vocabulario Técnico Consistente: Mantén el vocabulario técnico de ciberseguridad original, conservando los términos en inglés de la jerga (ej., Bug Bounty, Exploit, 0-day, DevSecOps, SSDLC, Data Leaks, Ransomware, Phishing, Insider, APT, DDoS, Malware, etc.), incluso si el texto principal está en español.
 
-- Desarrollo/Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
+Agrupación Lógica: Agrupa la información relacionada para evitar redundancias y mejorar la claridad y el flujo del documento.
 
-- Eliminación de Elementos Externos: Elimina cualquier etiqueta de cita () o referencias a grabaciones/fuentes externas que puedan aparecer en el texto original (ej. ``, Transcribed on... by Minutes Al, These notes were taken with Minutes Al (https://myminutes.ai)). 
+Comprensibilidad: El informe debe ser fácil de entender, permitiendo repasar el contenido de la clase sin necesidad de volver a ver el vídeo original.
 
-- No incluyas ninguna cita o referencia a los documentos de fuentes utilizados. Ejemplo: (cite: 139).
+Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
 
-- Sin Contenedores Externos: NO pongas el resultado en un canvas, un documento inmersivo ni ningún otro tipo de contenedor o entorno específico. Quiero el texto Markdown directamente.
+Eliminación de Elementos Externos: No incluyas citas o referencias a las fuentas, y elimina cualquier etiqueta de cita o referencias a grabaciones/fuentes externas que puedan aparecer en el texto original (ej., ([cite: 139], [cite_start]), "Transcribed on... by Minutes Al", "These notes were taken with Minutes Al (https://myminutes.ai)").
+
+Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningún tipo de contenedor (canvas, documento inmersivo, etc.).
 
 ------------------------
 
 
-Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas.
+Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
