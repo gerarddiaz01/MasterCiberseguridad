@@ -7,7 +7,7 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 
 "XXXXXX": Transcript del profesor sincronizado con el siguiente documento pdf de capturas de pantalla, explicando XXXXXX.
 
-"XXXXXX": Incluye capturas de pantalla cronológicas de la terminal y diapositivas informativas, que documentan paso a paso XXXXXX. Estas imágenes están sincronizadas con las transcripciones y cada una lleva una breve explicación para un contexto adicional.
+"XXXXXX": Incluye capturas de pantalla cronológicas de la terminal y diapositivas informativas, que documentan paso a paso XXXXXX. Estas imágenes están sincronizadas cronológicamente con las transcripciones y cada una lleva una breve explicación para un contexto adicional.
 
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
@@ -51,7 +51,7 @@ Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningú
 ---------------------------------------
 
 
-Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido. Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
 
 ----------------------------------------
 
@@ -66,7 +66,7 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 
 "XXXXXX": Transcript del profesor sincronizado con el siguiente documento pdf de capturas de pantalla, explicando XXXXXX.
 
-"XXXXXX": Incluye screenshots ordenados cronológicamente que documentan paso a paso XXXXXX. Estas imágenes están sincronizadas con el transcript anterior, el profesor explica éstas diapositivas.
+"XXXXXX": Incluye screenshots de diapositivas que documentan XXXXXX. Estas imágenes están sincronizadas cronológicamente con el transcript anterior, el profesor explica éstas diapositivas.
 
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
@@ -108,4 +108,4 @@ Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningú
 ------------------------
 
 
-Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido. Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
