@@ -12,9 +12,11 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Contenido Específico del Informe:
+Redacta un informe estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos: 
 
-Estructura y organiza toda la información relevante sobre XXXXXX.
+-
+-
+-
 
 Explica paso a paso todas las pruebas realizadas y los comandos ejecutados.
 
@@ -24,7 +26,7 @@ Todo lo anterior debe ser explicado utilizando toda la información de los docum
 
 Directrices de Estilo y Formato:
 
-Identificación de Fuentes al Inicio: El informe **DEBE** comenzar con una sección clara que liste los nombres **exactos** de todos los documentos PDF utilizados como referencia. Esta sección debe ser la **primera línea visible** del informe. Formato: `Documentos de Referencia: "NombreDoc1.pdf", "NombreDoc2.pdf"`
+Identificación de Fuentes al Inicio: El informe **DEBE** comenzar con una sección clara que liste los nombres **exactos** de todos los documentos PDF utilizados como referencia. Esta sección debe ser la **primera línea visible** del informe. Éste listado de los documentos utilizados para hacer el informe tiene que ser la única referencia a documentos externos, no me incluyas ninguna otra fuente. Formato: `Documentos de Referencia: "NombreDoc1.pdf", "NombreDoc2.pdf"`
 
 Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica, clara y fácil de seguir.
 
@@ -46,18 +48,22 @@ Comprensibilidad: El informe debe ser fácil de entender, permitiendo repasar el
 
 Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos utilizando la información ya presente en los documentos de referencia si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
 
-PROHIBICIÓN ESTRICTA DE CITAS Y ENLACES EXTERNOS: El informe **NO DEBE INCLUIR BAJO NINGÚN CONCEPTO** citas textuales, referencias numéricas a fuentes (), hipervínulos, URLs, nombres de sitios web, software de transcripción (ej. 'Minutes AI'), o cualquier otro tipo de referencia o enlace a fuentes externas, ni dentro del texto ni al final. Toda la información debe ser parafraseada y presentada como parte del contenido original generado, basándose **exclusivamente** en los documentos proporcionados.
+PROHIBICIÓN ESTRICTA DE CITAS Y ENLACES EXTERNOS: El informe **NO DEBE INCLUIR BAJO NINGÚN CONCEPTO** citas textuales, referencias numéricas a fuentes (), hipervínulos, URLs, nombres de sitios web, software de transcripción (ej. 'Minutes AI'), o cualquier otro tipo de referencia o enlace a fuentes externas, ni dentro del texto ni al final, con la excepción de la Identificación de Fuentes al Inicio, listando los nombres **exactos** de todos los documentos PDF utilizados como referencia. Toda la información debe ser parafraseada y presentada como parte del contenido original generado, basándose **exclusivamente** en los documentos proporcionados.
 
 Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningún tipo de contenedor (canvas, documento inmersivo, etc.).
 
-Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna forma de citación o enlace externo** presente en el informe.
+Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna forma de citación o enlace externo** presente en el informe (excepto la Identificación de Fuentes al Inicio, listando los nombres **exactos** de todos los documentos PDF utilizados como referencia).
 
 ---------------------------------------
 
 
-En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido. Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: sin quitar los documentos listadosquitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]). Es importante que al quitarme las
 
 ----------------------------------------
+
+En relación con el informe que me acabas de dar sobre XXXXXXX, quiero que seas más preciso y me des mas información, utiliza los documentos que te he dado para que el informe sea mucho más rico en información.
+
+--------------------------------------
 
 
 # Teoria + Diapositivas pdf
@@ -74,9 +80,11 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Contenido Específico del Informe:
+Redacta un informe estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos: 
 
-Estructura y organiza toda la información relevante sobre XXXXXX.
+-
+-
+-
 
 Detalla los conceptos aprendidos.
 
@@ -84,7 +92,7 @@ Todo lo anterior debe ser explicado utilizando toda la información de los docum
 
 Directrices de Estilo y Formato:
 
-Identificación de Fuentes al Inicio: El informe **DEBE** comenzar con una sección clara que liste los nombres **exactos** de todos los documentos PDF utilizados como referencia. Esta sección debe ser la **primera línea visible** del informe. Formato: `Documentos de Referencia: "NombreDoc1.pdf", "NombreDoc2.pdf"`
+Identificación de Fuentes al Inicio: El informe **DEBE** comenzar con una sección clara que liste los nombres **exactos** de todos los documentos PDF utilizados como referencia. Esta sección debe ser la **primera línea visible** del informe. Éste listado de los documentos utilizados para hacer el informe tiene que ser la única referencia a documentos externos, no me incluyas ninguna otra fuente. Formato: `Documentos de Referencia: "NombreDoc1.pdf", "NombreDoc2.pdf"`
 
 Jerarquía de Títulos: Utiliza títulos y subtítulos (#, ##, ###, etc.) para crear una estructura lógica, clara y fácil de seguir.
 
@@ -108,13 +116,19 @@ Comprensibilidad: El informe debe ser fácil de entender, permitiendo repasar el
 
 Ampliación (Opcional): Puedes desarrollar o ampliar ligeramente algunos temas o conceptos utilizando la información ya presente en los documentos de referencia si eso ayuda a la comprensión general, siempre que sea relevante y no genere repetición innecesaria.
 
-PROHIBICIÓN ESTRICTA DE CITAS Y ENLACES EXTERNOS: El informe **NO DEBE INCLUIR BAJO NINGÚN CONCEPTO** citas textuales, referencias numéricas a fuentes (), hipervínulos, URLs, nombres de sitios web, software de transcripción (ej. 'Minutes AI'), o cualquier otro tipo de referencia o enlace a fuentes externas, ni dentro del texto ni al final. Toda la información debe ser parafraseada y presentada como parte del contenido original generado, basándose **exclusivamente** en los documentos proporcionados.
+PROHIBICIÓN ESTRICTA DE CITAS Y ENLACES EXTERNOS: El informe **NO DEBE INCLUIR BAJO NINGÚN CONCEPTO** citas textuales, referencias numéricas a fuentes (), hipervínulos, URLs, nombres de sitios web, software de transcripción (ej. 'Minutes AI'), o cualquier otro tipo de referencia o enlace a fuentes externas, ni dentro del texto ni al final, con la excepción de la Identificación de Fuentes al Inicio, listando los nombres **exactos** de todos los documentos PDF utilizados como referencia. Toda la información debe ser parafraseada y presentada como parte del contenido original generado, basándose **exclusivamente** en los documentos proporcionados.
 
 Formato de Salida: El resultado debe ser texto Markdown directamente, sin ningún tipo de contenedor (canvas, documento inmersivo, etc.).
 
-Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna forma de citación o enlace externo** presente en el informe.
+Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna forma de citación o enlace externo** presente en el informe (excepto la Identificación de Fuentes al Inicio, listando los nombres **exactos** de todos los documentos PDF utilizados como referencia).
 
 ------------------------
 
 
-En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido. Quita las citas y referencias a los documentos fuente pero no modifiques nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: quitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+
+
+
+-------------------------
+
+En relación con el informe que me acabas de dar sobre XXXXXXX, quiero que seas más preciso y me des mas información, utiliza los documentos que te he dado para que el informe sea mucho más rico en información.
