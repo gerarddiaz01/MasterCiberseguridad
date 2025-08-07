@@ -194,3 +194,784 @@ La práctica de la monitorización en Windows Server implica un flujo de trabajo
 4.  **Diagnóstico de Inestabilidad (Monitor de Confiabilidad):** Si el sistema presenta una inestabilidad general, el Monitor de Confiabilidad se usa para identificar el momento exacto en que comenzaron los problemas y qué eventos (instalaciones, actualizaciones) están relacionados con esas caídas en la estabilidad.
 
 El uso combinado de estas herramientas permite a un administrador no solo reaccionar a los problemas, sino también analizarlos, prevenir futuros fallos y fortalecer la seguridad del sistema mediante la identificación de comportamientos anómalos o configuraciones defectuosas.
+
+---
+
+Documentos de Referencia: "5-22 Active Directory.pdf", "FSW Clase 22 – Active Directory.pdf"
+
+# Informe Detallado sobre Active Directory y Active Directory Domain Service
+
+## ¿Qué es un Dominio y un Controlador de Dominio?
+
+Un **dominio** es un entorno de administración centralizada que opera en un contexto de confianza. Permite la creación de cuentas para usuarios, grupos y equipos. La administración centralizada se encarga de los procesos de autenticación y autorización. Un dominio requiere de uno o más **controladores de dominio (DC)**, que son servidores esenciales para su funcionamiento. Estos servidores tienen la responsabilidad de almacenar una copia de la base de datos del directorio activo. Esta base de datos se mantiene sincronizada de forma permanente entre todos los controladores de dominio que pertenecen al mismo dominio.
+
+Debido a que el servicio que ofrecen los controladores de dominio es crítico, se recomienda tener al menos dos servidores por cada dominio. Si uno de los controladores deja de funcionar, los procesos de autenticación y autorización se verían comprometidos, pero con un segundo DC, el servicio puede continuar respaldado.
+
+## Directorio Activo, Active Directory Domain Services y Bosques
+
+El **Directorio Activo** es el servicio de directorio que organiza y administra los recursos de red. El **Active Directory Domain Services (AD DS)** es el rol principal que se instala en un servidor para convertirlo en un controlador de dominio. A través de este servicio, se pueden crear dominios, árboles de dominio y bosques.
+
+Un **árbol de dominio** es una estructura jerárquica que puede contener dominios hijos. Por ejemplo, si existe el dominio `EMPRESA.COM`, un dominio hijo podría ser `MAIL.EMPRESA.COM`. Los dominios dentro del mismo árbol comparten una relación de confianza y seguridad. Un **bosque** es una estructura de ámbito superior que contiene dominios. Cuando se crea el primer dominio, también se crea un bosque, que normalmente tiene el mismo nombre que el dominio.
+
+La frontera de seguridad en un entorno de Active Directory se establece a nivel de bosque. Todos los dominios que forman parte del mismo bosque tienen una relación de confianza implícita. Para tener dominios completamente independientes a nivel de seguridad, es necesario configurarlos en bosques distintos.
+
+## Instalación Práctica de un Controlador de Dominio
+
+La instalación de un controlador de dominio se puede realizar a través de Windows PowerShell o mediante el entorno gráfico. A continuación se describe el proceso utilizando el Server Manager:
+
+1.  **Añadir el Rol**: En el Server Manager, se navega a "Manage" (Administrar) y se selecciona "Add Roles and Features" (Añadir roles y características). Después de avanzar, se selecciona el servidor y, en la lista de roles, se marca "Active Directory Domain Services". Este es el rol principal, aunque existen otros roles relacionados como Certificate Service o Federation Service. Se procede a instalar el rol.
+2.  **Promover el Servidor**: Una vez que la instalación de las características termina, se presenta la opción de promover el servidor a controlador de dominio. Durante este proceso, un asistente guía al usuario. En la primera opción, se decide qué se quiere desplegar.
+3.  **Seleccionar la Operación de Despliegue**: Las opciones principales son:
+    * `Add a domain controller to an existing domain`: Para añadir un DC a un dominio ya existente.
+    * `Add a new domain to an existing forest`: Para crear un dominio hijo o un dominio nuevo dentro de un bosque ya existente.
+    * `Add a new forest`: Se utiliza para crear el primer dominio y, por consiguiente, un nuevo bosque.
+4.  **Configurar el Nivel Funcional**: Durante la configuración, se pregunta por el nivel funcional del bosque y del dominio. Este nivel, que puede ir de 2008 a 2016, determina las características de Active Directory disponibles. Un nivel funcional de `Windows Server 2016` no permite tener controladores de dominio con versiones de sistema operativo inferiores a 2016.
+5.  **Opciones del Controlador de Dominio**:
+    * Se puede configurar el servidor para que sea también un **servidor DNS**. Se recomienda que todos los controladores de dominio actúen como servidores DNS para resolver las peticiones del dominio.
+    * Se debe seleccionar si el servidor será un **Catálogo Global**, lo cual es obligatorio para el primer controlador de dominio de un nuevo dominio.
+    * Se puede elegir si será un **controlador de dominio de solo lectura (RODC)**. Un RODC es una copia secundaria que no puede realizar cambios en el Directorio Activo y es útil en sucursales donde la seguridad es una preocupación. El primer DC de un dominio nunca puede ser un RODC.
+6.  **Modo de Restauración**: Se debe establecer una contraseña para el modo de restauración del Directorio Activo. Esta clave es necesaria para restaurar la base de datos a un estado anterior, por ejemplo, a partir de una copia de seguridad. Es crucial no confundirla con la clave de administrador del dominio.
+7.  **Almacenamiento de la Base de Datos**: Se especifica la ubicación para la base de datos de Active Directory (`NTDS.dit`) y la carpeta `SYSVOL`. En un entorno de producción, es una buena práctica almacenar estos archivos en un volumen de disco separado del volumen del sistema.
+8.  **Verificación de Prerrequisitos e Instalación**: El sistema verifica los prerrequisitos. Es común que aparezcan advertencias relacionadas con el servicio DNS, ya que el servidor se encarga de instalarlo si no existe. Se procede con la instalación y, al finalizar, se requiere un reinicio obligatorio del servidor.
+
+### La importancia del servicio DNS
+
+La resolución de la mayoría de los recursos en el Directorio Activo se realiza a través de peticiones del servicio DNS. Los controladores de dominio utilizan registros de servicio (SRV) para permitir la resolución de recursos del tipo `_Service._Protocol.DomainName`.
+
+## Catálogo Global
+
+El **catálogo global** es una base de datos parcial de solo lectura que contiene todos los objetos del Directorio Activo. Su función principal es permitir la localización de recursos en otros dominios que pertenecen al mismo bosque. Un catálogo global es obligatorio en el primer controlador de dominio instalado en un nuevo dominio.
+
+## Proceso de Autenticación
+
+El proceso de autenticación en un dominio se realiza de la siguiente manera:
+
+1.  El usuario se autentica en el controlador de dominio. El usuario debe demostrar su identidad, lo cual puede implicar el uso de una contraseña, autenticación multifactor, etc.
+2.  Una vez que el usuario ha superado el proceso de autenticación, el controlador de dominio le emite un ticket TGT (Ticket Granting Ticket).
+3.  El usuario utiliza este ticket TGT para acceder a los recursos de la red.
+4.  El controlador de dominio, a través del servicio Kerberos y un sistema de distribución de claves (Key Distribution Center - KDC), valida el ticket y emite permisos para que el usuario acceda a los recursos solicitados.
+
+## Herramientas y Consolas de Administración
+
+Una vez que se ha instalado el rol de Active Directory, se dispondrá de una serie de herramientas de administración accesibles desde el menú "Tools" del Server Manager:
+
+* **Active Directory Administrative Center**: Proporciona una interfaz gráfica para la administración general.
+* **Active Directory Users and Computers**: Permite crear y gestionar usuarios, grupos y cuentas de equipos. También se pueden crear **Unidades Organizativas (OU)**, que son contenedores especiales para aplicar delegaciones o políticas de grupo (GPOs).
+* **Active Directory Sites and Services**: Para la administración de la topología de la red.
+* **Active Directory Domains and Trusts**: Para gestionar las relaciones de confianza entre dominios.
+* **Active Directory Schema snap-in**: Permite la gestión del esquema del directorio activo, que define los atributos de los objetos (como usuarios, equipos, etc.). Por ejemplo, el atributo `distinguishedName` identifica un objeto de forma única, mientras que el `objectSID` es un identificador de seguridad único.
+* **Active Directory module for Windows PowerShell**: Para la administración del Directorio Activo a través de la línea de comandos.
+* **Consola de administración del servicio DNS**: Es una herramienta crucial, ya que la resolución de recursos del directorio activo se realiza a través de DNS.
+
+## Ejercicio: Instalación del Rol de AD DS, Creación de Dominio y Unión de un Equipo Cliente
+
+A continuación, se detalla el proceso para realizar el ejercicio propuesto:
+
+### 1. Configuración de la Conectividad de Red
+Antes de iniciar, es fundamental asegurarse de que las máquinas virtuales (el servidor y el cliente) estén en la misma red virtual. Para ello, se accede a la configuración de red de las máquinas y se selecciona la misma "red interna".
+
+### 2. Preparación del Servidor
+En el servidor que será el controlador de dominio, se deben realizar las siguientes configuraciones previas:
+* **Dirección IP**: Se asigna una dirección IP estática en la misma subred que los equipos cliente. Por ejemplo, `192.168.1.11`.
+* **Servidor DNS**: Se configura la dirección DNS del servidor para que apunte a sí mismo (`192.168.1.11` o `127.0.0.1`).
+* **Nombre del Equipo**: Es muy importante cambiar el nombre del equipo antes de instalar el rol de AD DS para evitar conflictos.
+
+### 3. Instalación del Rol de Active Directory Domain Services
+1.  En el Server Manager, se selecciona "Manage" > "Add Roles and Features".
+2.  Se avanza hasta la sección "Server Roles" y se marca "Active Directory Domain Services". Se aceptan las características adicionales y se procede a la instalación.
+3.  Una vez finalizada la instalación, se hace clic en el enlace para "Promote this server to a domain controller" (Promover este servidor a controlador de dominio).
+
+### 4. Creación de un Nuevo Dominio en un Nuevo Bosque
+1.  En el asistente de configuración, se selecciona la opción "Add a new forest" (Añadir un nuevo bosque).
+2.  Se introduce un nombre de dominio válido, por ejemplo, `HackersAcademy.com`.
+3.  Se establece la contraseña para el modo de restauración del Directorio Activo.
+4.  Se especifican las ubicaciones para la base de datos del Directorio Activo y la carpeta `SYSVOL`. Se reitera que en un entorno de producción, deben estar en un volumen de disco separado.
+5.  Se revisan las opciones de configuración y se procede a la instalación. El equipo solicitará un reinicio al finalizar.
+
+### 5. Configuración del Equipo Cliente y Unión al Dominio
+1.  En el equipo cliente (por ejemplo, Windows 11), se accede a la configuración de red.
+2.  Se asigna una dirección IP estática en la misma subred del servidor (ej. `192.168.1.5`).
+3.  Se configura el servidor DNS para que apunte a la dirección IP del controlador de dominio (`192.168.1.11`).
+4.  Se accede a la configuración del sistema, se navega a "About" y se selecciona "Domain or Workgroup" para cambiar la pertenencia del equipo.
+5.  Se elige la opción "Domain" y se introduce el nombre del dominio creado (`HackersAcademy.com`).
+6.  Se solicita un usuario y una contraseña con permisos para unir equipos al dominio. Al introducirlos, el equipo se une al dominio.
+7.  El equipo cliente requerirá un reinicio obligatorio.
+
+### 6. Verificación en el Servidor
+Una vez que el equipo cliente se ha reiniciado:
+* En el Server Manager del controlador de dominio, se abre la consola de "Active Directory Users and Computers".
+* En el contenedor de "Computers", se debería ver la cuenta del equipo cliente que se acaba de unir.
+* En la consola de DNS, en la zona de búsqueda directa del dominio, aparecerá el registro del equipo cliente con su dirección IP correspondiente.
+
+---
+
+Documentos de Referencia: "5-24 usuarios y grupos.pdf", "FSW Clase 24 – Usuarios y Equipos de Active Directory.pdf"
+
+# Usuarios y Equipos en Active Directory
+
+## Cuentas de Usuario y sus Propiedades
+
+Las cuentas de usuario representan una identidad que un usuario o trabajador del dominio utiliza para acceder a los recursos de la red. Permiten o deniegan el acceso a equipos, procesos, recursos y servicios. También se usan para administrar los permisos de los recursos de red. Las cuentas de usuario pueden crearse a través de diferentes herramientas:
+
+* **Active Directory Users and Computers**
+* **Active Directory Administrative Center**
+* **Windows PowerShell**
+* **Línea de comandos** con utilidades como `dsadd`.
+
+Al gestionar usuarios, es crucial considerar que el nombre de usuario debe tener un formato único. El **User Principal Name (UPN)**, por ejemplo, `nombredeusuario@sufijoUPN`, es el nombre con el que el usuario inicia sesión. Por otro lado, el **distinguishedName** es una cadena de texto con un formato específico (por ejemplo, `CN=Angel,CN=Users,DC=Hackers,DC=com`) que sirve como identificador para que Active Directory reconozca el objeto. El **Identificador de Seguridad (SID)**, por su parte, es un objeto único que se crea al dar de alta un usuario. Es el SID, y no el nombre de usuario o el UPN, lo que se asocia a los permisos que se otorgan a los recursos, servicios o aplicaciones.
+
+Las propiedades de usuario se dividen en categorías:
+
+* **Cuenta**: Contiene el nombre y los apellidos del usuario, así como los nombres de inicio de sesión **UPN** y **SAMAccountName**. También incluye configuraciones sobre las horas de inicio de sesión, la fecha de expiración de la cuenta y opciones de contraseña.
+* **Organización**: Almacena datos descriptivos de la empresa como el departamento o la compañía.
+* **Perfil**: Permite configurar perfiles de usuario, especificando si los datos se almacenan en el dispositivo local o en un servidor centralizado en una ubicación de red. Se puede usar el formato **Universal Naming Convention (UNC)** con la variable `%username%` para la ruta del perfil, como `\\LON-FS\profile$\%username%`.
+* **Miembro de**: Muestra los grupos a los que pertenece el usuario.
+* **Password Settings**: Opciones avanzadas de contraseña.
+* **Policy & Authentication policy silos**: Se utilizan para los procesos de autenticación.
+* **Extensiones**: Permite ver atributos de un objeto, como el `distinguishedName` y el `SID`.
+
+### Gestión Práctica de Cuentas de Usuario
+
+Desde el **Active Directory Administrative Center**, en la sección del dominio, se pueden gestionar objetos. Es recomendable activar la **papelera de reciclaje (Recycle Bin)** del dominio, lo cual crea un contenedor de objetos eliminados para facilitar la recuperación.
+
+Para crear un usuario, se va a "Users" y se selecciona "New" > "User". Se deben introducir el **UPN** y la contraseña, ya que son datos cruciales para el inicio de sesión.
+
+La configuración de las propiedades del usuario es una medida de seguridad importante. Por ejemplo:
+* **Log on hours**: Permite restringir las horas en las que un usuario puede iniciar sesión. Si un empleado no trabaja el fin de semana, se puede denegar el inicio de sesión durante ese periodo, lo que reduce la superficie de ataque y mejora la capacidad de reacción ante un posible incidente.
+* **Log on to**: Permite especificar en qué equipos el usuario puede iniciar sesión, limitando su acceso a los dispositivos que realmente necesita, lo cual es una medida de seguridad adicional.
+
+Para las tareas de gestión, también se puede utilizar la consola **Active Directory Users and Computers**. Por defecto, esta consola no muestra todas las opciones, pero si se habilita "Advanced Features" en el menú "View", se hacen visibles pestañas adicionales, como el "Attribute Editor".
+
+Para eliminar un usuario, simplemente se hace clic derecho sobre él y se selecciona "Delete". Si la papelera de reciclaje está activada, el usuario se moverá al contenedor de "Deleted Objects". Desde allí, se puede restaurar a su ubicación original o a otra unidad organizativa.
+
+Otra acción de seguridad es **desactivar un usuario**. Esto es útil cuando un empleado está de vacaciones o de baja, ya que evita que la cuenta sea utilizada y limita la superficie de ataque.
+
+## Grupos de Active Directory
+
+Para una gestión eficiente de los permisos en organizaciones grandes, los usuarios se organizan en **grupos**. Los permisos se otorgan a los grupos en lugar de a usuarios individuales, lo que simplifica su mantenimiento.
+
+Existen dos tipos principales de grupos:
+
+1.  **Grupos de Distribución**: Se usan principalmente para el envío de correo electrónico. No tienen un SID, por lo que no se les pueden asignar permisos de seguridad.
+2.  **Grupos de Seguridad**: Tienen un SID, lo que permite asignarles permisos de seguridad para acceder a recursos.
+
+Los grupos también tienen diferentes áreas de ámbito:
+
+| Tipo de Grupo | Descripción |
+| :--- | :--- |
+| **Grupos Locales** | Permiten acceso a recursos solo en el equipo local. |
+| **Grupos Locales de Dominio** | Otorgan acceso a los recursos del dominio. |
+| **Grupos Globales** | Brindan acceso a objetos en todo el bosque. |
+| **Grupos Universales** | Combinan características de los grupos globales y locales, ideales para redes con múltiples dominios. |
+
+Los grupos globales, por defecto, otorgan privilegios a lo largo de todos los dominios de un bosque. Esta es la razón por la que un usuario de un dominio puede acceder a recursos de otro dominio si ambos están en el mismo bosque, gracias a la relación de confianza implícita.
+
+### Grupos con Privilegios
+
+Existen grupos de seguridad especiales y con privilegios controlados por el sistema operativo:
+
+| Grupo | Ubicación |
+| :--- | :--- |
+| **Enterprise Admins** | Contenedor de usuarios del dominio raíz del bosque. |
+| **Schema Admins** | Contenedor de usuarios del dominio raíz del bosque. |
+| **Administrators** | Contenedor `Built-in` de cada dominio. |
+| **Domain Admins** | Contenedor de usuarios de cada dominio. |
+| **Server Operators** | Contenedor `Built-in` de cada dominio. |
+| **Account Operators** | Contenedor `Built-in` de cada dominio. |
+| **Backup Operators** | Contenedor `Built-in` de cada dominio. |
+| **Print Operators** | Contenedor `Built-in` de cada dominio. |
+| **Cert Publishers** | Contenedor de usuarios de cada dominio. |
+
+Estos grupos deben ser gestionados con mucho cuidado, y es vital tener control sobre qué usuarios pertenecen a ellos y cuándo utilizan sus privilegios.
+
+## Cuentas de Equipo y Canales Seguros
+
+Las **cuentas de equipo** representan los dispositivos que se han unido a un dominio. Por defecto, estas cuentas se almacenan en el contenedor `Computers`, pero es recomendable usar **Unidades Organizativas (UO)** para una mejor administración. Las UO permiten delegar el control y personalizar la configuración a través de políticas de grupo.
+
+Cuando un equipo se une a un dominio, se establece un **canal seguro** entre el equipo y el controlador de dominio (DC). El servicio `Net Logon` utiliza las credenciales de la cuenta de equipo para establecer este canal. El equipo almacena una contraseña que se actualiza automáticamente cada 30 días, y esta debe coincidir con la del DC para que la comunicación sea correcta.
+
+Este canal seguro puede romperse en varias situaciones:
+* Al reinstalar un equipo con el mismo nombre, lo que genera un nuevo SID y contraseña.
+* Si la contraseña del equipo no coincide con la del DC.
+* Al restaurar un equipo desde una copia de seguridad o un punto de control de virtualización.
+* Al sacar un equipo del dominio y volver a unirlo, lo que genera un nuevo SID.
+
+El problema de obtener un nuevo SID es que si se habían otorgado permisos basados en el SID anterior, estos permisos dejarán de funcionar, ya que el SID del equipo ha cambiado.
+
+Para restaurar el canal seguro sin sacar el equipo del dominio, se pueden usar las siguientes opciones:
+
+* **Comando `nltest`**: `nltest /server:servername /sc_reset:domain\domaincontroller`.
+* **Comando `netdom`**: `netdom reset MachineName /domain DName /UserO UName /PasswordO {Password *}`.
+* **Windows PowerShell**: `Test-Computer SecureChannel -Repair`.
+* **Consola gráfica**: En "Active Directory Users and Computers" o "Administrative Center", se puede usar la opción "Reset Account" (Restablecer cuenta).
+
+## Conclusiones
+
+Comprender el funcionamiento de los objetos en AD DS es fundamental para mantener la seguridad de todo el dominio. Una correcta planificación de grupos, permisos y la estructura de contenedores basada en unidades organizativas (UO) permite crear organizaciones seguras y escalables.
+
+---
+
+Documentos de Referencia: "5-25 Unidades organizativas.pdf", "FSW Clase 25 – Unidades Organizativas y Delegaciones.pdf"
+
+# Informe Detallado sobre Unidades Organizativas (UO) en Active Directory
+
+## Unidades Organizativas: Concepto, Utilidad y Repercusiones en Seguridad
+
+Las **Unidades Organizativas (UO)** son un tipo de objeto fundamental que se puede crear dentro de **Active Directory**. Funcionan como contenedores lógicos que permiten almacenar y clasificar otros objetos de infraestructura, tales como **usuarios**, **grupos** y **cuentas de equipo**. La creación de una estructura de UOs adecuada es esencial para una gestión eficiente y segura de los recursos en un dominio.
+
+### Propósito y Organización
+
+El principal propósito de las UOs es facilitar la **clasificación** de los objetos de Active Directory según las necesidades de la organización. Esta clasificación puede basarse en diversos criterios, como:
+
+* **Ubicación geográfica:** Por ejemplo, UOs para países (España, Francia, Inglaterra, Portugal) y, dentro de ellos, para regiones o provincias (Asturias, Madrid, Cataluña, Murcia).
+* **Departamentos:** UOs para contabilidad, comercial, directivos, IT, etc.
+* **Sucursales:** Permitiendo una organización granular por cada sede de la empresa.
+
+Esta estructura jerárquica, similar a carpetas dentro de carpetas, pero con funcionalidades avanzadas, permite una administración más granular y simplificada. Al clasificar los objetos de esta manera, se pueden aplicar configuraciones o delegar permisos de forma específica a los elementos contenidos en cada UO.
+
+### Repercusiones en Seguridad
+
+Las UOs son un pilar fundamental para mantener la **seguridad** y **planificar las configuraciones** en un dominio. Permiten crear entornos seguros y escalables al:
+
+* **Aplicar configuraciones específicas:** Las UOs son el único elemento, junto con los **Sitios** y **Dominios**, al que se pueden asignar configuraciones mediante **Objetos de Directiva de Grupo (GPO)**. Esto significa que las configuraciones se aplican únicamente a los usuarios, equipos o grupos dentro de una UO específica, evitando la aplicación global de políticas que podrían ser inapropiadas para ciertas partes de la organización.
+* **Delegación eficiente de control:** Permiten asignar **privilegios específicos** para tareas determinadas a usuarios o grupos concretos, y lo más importante, en **lugares específicos** de la organización (es decir, dentro de una UO particular). Esto evita la necesidad de añadir usuarios a grupos con privilegios excesivos, como el grupo de administradores de dominio, lo que reduce la superficie de ataque y minimiza el riesgo de acciones no autorizadas.
+
+Es crucial destacar que no se pueden enlazar GPOs directamente a los contenedores por defecto de Active Directory, como el contenedor de **Users** o el de **Computers**, ya que no son Unidades Organizativas. Si todos los usuarios y equipos permanecieran en estos contenedores predeterminados, sería imposible aplicar configuraciones específicas de forma granular.
+
+## ¿Qué son los Group Policy Objects (GPO)?
+
+Los **Group Policy Objects (GPO)**, u Objetos de Directiva de Grupo, son colecciones de configuraciones que se aplican a usuarios y equipos en un entorno de Active Directory. Estas configuraciones pueden abarcar una amplia gama de aspectos, desde políticas de seguridad (como requisitos de contraseña, bloqueo de cuentas), configuraciones de software, scripts de inicio/apagado, hasta configuraciones de escritorio y redirección de carpetas.
+
+La principal ventaja de los GPO es su capacidad para **clasificar y aplicar configuraciones** de manera centralizada y eficiente. Como se mencionó anteriormente, los GPO solo pueden ser enlazados a **Sitios**, **Dominios** o **Unidades Organizativas**. Esto permite a los administradores definir políticas una vez y aplicarlas automáticamente a miles de usuarios o equipos, garantizando la consistencia y el cumplimiento de las políticas de seguridad y operativas en toda la organización.
+
+Por defecto, en un dominio de Active Directory, existen algunas directivas predefinidas:
+
+* **Default Domain Policy:** Una directiva que se aplica a todo el dominio.
+* **Default Domain Controllers Policy:** Una directiva específica para los controladores de dominio.
+
+Estas directivas predeterminadas son un punto de partida, pero la verdadera flexibilidad y control se obtienen al crear GPO personalizados y enlazarlos a las UOs para aplicar configuraciones específicas donde se necesiten.
+
+## Organizational Units (OU) Delegate Control
+
+La función de **OU Delegate Control** (Delegación de Control de Unidad Organizativa) es una de las ventajas más significativas de utilizar las UOs. Permite a los administradores asignar **privilegios específicos** para una determinada tarea a usuarios o grupos, y limitar el alcance de esos permisos a una UO particular.
+
+Esto se logra a través de un **asistente de delegación (Delegation of Control Wizard)** que guía al administrador a través del proceso. En lugar de otorgar permisos amplios a un usuario o grupo (como hacerlos administradores de dominio), la delegación de control permite conceder permisos muy granulares, como:
+
+* Crear, borrar y administrar cuentas de usuario.
+* Restablecer contraseñas de usuario y forzar el cambio de contraseña en el siguiente inicio de sesión.
+* Leer toda la información de usuario.
+* Crear, borrar y administrar grupos.
+* Modificar la pertenencia a un grupo.
+* Generar un Conjunto Resultante de Política (Resultant Set of Policy o RSoP).
+* Crear objetos personalizados (como cuentas de equipo).
+
+La clave de esta funcionalidad es que el usuario o grupo delegado solo podrá realizar la tarea asignada y **solo dentro de la UO o UOs específicas** donde se le ha otorgado ese permiso. Por ejemplo, un usuario podría tener permiso para crear cuentas de equipo, pero únicamente en la UO de su país o departamento. Esto es crucial para el principio de **privilegio mínimo**, donde a los usuarios se les otorgan solo los permisos necesarios para realizar sus funciones, reduciendo el riesgo de errores o abusos.
+
+## Demostración Práctica: Creación y Gestión de Unidades Organizativas y GPO
+
+La demostración práctica en una máquina virtual ilustra el proceso detallado de cómo trabajar con Unidades Organizativas, configurar delegaciones y asignar GPO.
+
+### 1. Acceso a las Herramientas de Administración
+
+El primer paso es acceder a la consola de **Active Directory Users and Computers**. Esto se realiza desde el **Server Manager Dashboard**:
+
+* Navegar a **Tools** (Herramientas).
+* Seleccionar **Active Directory Users and Computers** (Usuarios y equipos de Active Directory).
+
+### 2. Creación de Nuevos Objetos de Unidad Organizativa
+
+Una vez en la consola de Active Directory Users and Computers, se procede a crear una nueva UO:
+
+* En el panel izquierdo, seleccionar el dominio principal (ej., `Hackers.Academy`).
+* Hacer clic derecho sobre el dominio, seleccionar **New** (Nuevo) y luego **Organizational Unit** (Unidad Organizativa).
+* Aparecerá el cuadro de diálogo **New Object - Organizational Unit**.
+* **Name:** Introducir el nombre de la nueva UO (ej., `España`).
+* **Protect container from accidental deletion:** Es una opción importante que debe mantenerse marcada por defecto para evitar eliminaciones accidentales de la UO.
+* Hacer clic en **OK**.
+
+Una vez creada la UO principal, se pueden crear UOs anidadas para construir una estructura jerárquica más detallada. Por ejemplo, dentro de la UO `España`, se pueden crear UOs para `Madrid`, `Barcelona`, etc. Esto se hace seleccionando la UO `España`, haciendo clic derecho, y repitiendo el proceso de "New > Organizational Unit".
+
+### 3. Estructura de un Dominio con Unidades Organizativas
+
+La demostración muestra cómo se puede construir un esqueleto organizativo basado en las necesidades de la empresa. Por ejemplo, una estructura podría ser:
+
+* `Hackers.Academy` (Dominio)
+    * `EEUU` (UO)
+        * `BOSTON` (UO)
+        * `NEW YORK` (UO)
+    * `England` (UO)
+    * `Spain` (UO)
+
+Una vez que la estructura de UOs está definida, los usuarios y equipos existentes, que por defecto se encuentran en los contenedores `Users` y `Computers`, pueden ser movidos a las UOs correspondientes. Para mover un usuario:
+
+* Navegar al contenedor `Users`.
+* Hacer clic derecho sobre el usuario deseado.
+* Seleccionar **Move...** (Mover...).
+* En el cuadro de diálogo, seleccionar la UO de destino (ej., `España`).
+* Hacer clic en **OK**.
+
+Este proceso de mover objetos a las UOs es fundamental para que las configuraciones y delegaciones específicas de UO puedan aplicarse correctamente.
+
+### 4. Configuración de Organizational Unit Delegate Control
+
+Para configurar la delegación de control en una UO:
+
+* Hacer clic derecho sobre la UO deseada (ej., `España`).
+* Seleccionar **Delegate Control...** (Delegar control...).
+* Se abrirá el **Delegation of Control Wizard** (Asistente para la delegación de control).
+* **Welcome to the Delegation of Control Wizard:** Hacer clic en **Next** (Siguiente).
+* **Users or Groups:** Hacer clic en **Add...** (Agregar...) para seleccionar el usuario o grupo al que se le delegarán los permisos.
+    * Introducir el nombre del usuario o grupo (ej., `angel`) y hacer clic en **Check Names** (Comprobar nombres) para verificarlo.
+    * Hacer clic en **OK** y luego en **Next**.
+* **Tasks to Delegate:** Aquí se seleccionan las tareas comunes que se desean delegar. Se puede elegir entre:
+    * **Delegate the following common tasks:** Una lista de tareas predefinidas (ej., "Create, delete, and manage user accounts", "Reset user passwords and force password change at next logon").
+    * **Create a custom task to delegate:** Permite una personalización más profunda de los permisos. Si se elige esta opción:
+        * **Active Directory Object Type:** Se puede especificar si la delegación se aplica a "This folder, existing objects in this folder, and creation of new objects in this folder" o a tipos de objetos específicos (ej., "Computer objects", "User objects").
+        * **Permissions:** Se seleccionan los permisos específicos (ej., "Full Control", "Read", "Write", "Create All Child Objects", "Delete All Child Objects", "Read All Properties").
+* Hacer clic en **Next** y luego en **Finish** para completar la delegación.
+
+Este proceso permite otorgar permisos muy específicos a usuarios o grupos, limitando su alcance a una UO determinada, lo que es una práctica de seguridad recomendada para evitar el exceso de privilegios.
+
+### 5. Asignación de Configuraciones mediante Objetos de Directivas de Grupo (GPO)
+
+Finalmente, la demostración aborda cómo asignar configuraciones a las UOs mediante GPO.
+
+* Desde el **Server Manager Dashboard**, navegar a **Tools** (Herramientas).
+* Seleccionar **Group Policy Management** (Administración de directivas de grupo).
+* En la consola de **Group Policy Management**, se puede ver la estructura del dominio.
+* Navegar a la UO a la que se desea enlazar un GPO (ej., `España`).
+* Hacer clic derecho sobre la UO y seleccionar **Link an Existing GPO...** (Vincular un GPO existente...) o **Create a GPO in this domain, and Link it here...** (Crear un GPO en este dominio y vincularlo aquí...).
+
+Al enlazar un GPO a una UO, todas las configuraciones definidas en ese GPO se aplicarán a los usuarios y equipos contenidos en esa UO, así como a las UOs anidadas, siguiendo la herencia de GPO. Esto proporciona un control granular sobre las políticas aplicadas en diferentes segmentos de la organización.
+
+## Conceptos Aprendidos
+
+Este informe ha detallado la importancia de las Unidades Organizativas en Active Directory como contenedores lógicos para la clasificación de usuarios, grupos y equipos. Hemos explorado cómo estas UOs son fundamentales para la seguridad y la eficiencia administrativa, permitiendo la aplicación granular de configuraciones a través de los Group Policy Objects (GPO) y la delegación de control específica.
+
+Se ha enfatizado que los GPO solo pueden enlazarse a Sitios, Dominios o Unidades Organizativas, lo que subraya la necesidad de una estructura de UOs bien diseñada para una gestión efectiva. La delegación de control de UO se presenta como una herramienta poderosa para implementar el principio de privilegio mínimo, permitiendo a los usuarios realizar tareas específicas dentro de un ámbito limitado sin otorgarles permisos excesivos.
+
+La demostración práctica ha ilustrado el flujo de trabajo para crear UOs, organizar objetos dentro de ellas, delegar control y vincular GPO, proporcionando una comprensión completa de cómo estas funcionalidades se aplican en un entorno real de Active Directory. La correcta implementación de UOs y GPO es crucial para mantener un entorno de red seguro, escalable y fácilmente administrable.
+
+---
+
+Documentos de Referencia: "FSW Clase 26 – Objetos de Directiva de Grupo GPO.pdf", "5-26 Administración de GPO.pdf"
+
+# Informe Detallado sobre los Objetos de Directiva de Grupo (GPO)
+
+## Introducción a los GPO y su Rol en la Ciberseguridad
+
+Los **Objetos de Directiva de Grupo (GPO)** son una herramienta fundamental para la administración y la seguridad en entornos de Windows. Permiten la gestión centralizada de configuraciones de cuentas de usuarios y equipos, siendo aplicadas a nivel de **Sitio**, **Dominio** o **Unidad Organizativa (OU)**. Esta capacidad de aplicar configuraciones de forma masiva y específica hace que los GPO sean un recurso excelente para la aplicación de medidas de seguridad, políticas de acceso y configuraciones estandarizadas en empresas de cualquier tamaño. La configuración de los GPO se realiza una única vez y puede ser reutilizada para aplicarse a un gran número de usuarios o equipos de manera muy eficiente.
+
+---
+
+## Relación con Active Directory y Windows Server
+
+Los GPO están intrínsecamente ligados a los **Servicios de Dominio de Active Directory (AD DS)**. La gestión de los GPO se realiza a través de la consola de **Group Policy Management** en **Server Manager**.
+
+Existen dos GPO predeterminados que se crean al configurar un dominio:
+
+* **Default Domain Policy**: Se aplica por defecto a toda la estructura del dominio, es decir, a todos los elementos del Active Directory. Esta directiva establece configuraciones de seguridad a nivel de dominio, como las políticas de contraseña y las políticas de tickets de Kerberos.
+* **Default Domain Controllers Policy**: Se aplica exclusivamente a los equipos que actúan como controladores de dominio (DC o Domain Controllers). Esta directiva contiene configuraciones de seguridad adicionales específicas para proteger estos servidores críticos.
+
+Cuando un servidor es promovido a controlador de dominio, su cuenta de equipo se mueve del contenedor de `Computers` a la Unidad Organizativa de `Domain Controllers`, momento en el que se le aplican las directivas de la `Default Domain Controllers Policy`.
+
+---
+
+## Teoría y Fundamentos de los GPO
+
+El elemento más básico de un GPO es una configuración individual que define una política específica sobre un componente del sistema. Un solo GPO puede contener múltiples configuraciones, como políticas de **Firewall**, **VPN** o del **adaptador de red**. Las GPO se aplican a intervalos regulares de **90 a 120 minutos**, pero también se aplican en el reinicio del equipo (configuraciones de equipo) o al iniciar sesión (configuraciones de usuario).
+
+Existen dos tipos principales de configuraciones en los GPO:
+
+* **Configuración de Equipo**: Se aplican al sistema operativo al momento del arranque, independientemente del usuario que inicie sesión.
+* **Configuración de Usuario**: Se aplican al perfil del usuario al momento de iniciar sesión, independientemente del equipo que utilice.
+
+---
+
+## Administrative Templates
+
+Las **Administrative Templates** son el esquema de todas las configuraciones posibles dentro de un GPO. Sirven como un repositorio de ajustes que se pueden habilitar, deshabilitar o dejar sin configurar.
+
+Los estados que pueden tener las plantillas administrativas son tres:
+
+1.  **Not Configured (No Configurado)**: La configuración no está definida por la GPO y el sistema utiliza su valor predeterminado o la configuración de una GPO de menor precedencia.
+2.  **Enabled (Habilitado)**: La característica se activa, aplicando la configuración específica.
+3.  **Disabled (Deshabilitado)**: La característica se desactiva, impidiendo su uso.
+
+---
+
+## Consola de Administración de GPO (Group Policy Management)
+
+La consola de **Group Policy Management** es la herramienta principal para gestionar los GPO. Se accede a ella desde **Server Manager > Tools**. Dentro de una GPO, las configuraciones se dividen en dos categorías principales:
+
+### 1. Directivas (Policies)
+
+Son configuraciones **impositivas** y obligatorias que el usuario **no puede modificar**. Si un usuario intenta cambiar una configuración establecida por una directiva, los paneles de control estarán deshabilitados o se mostrará un mensaje indicando que la característica está controlada por la empresa.
+
+Dentro de las Directivas, encontramos las siguientes subcategorías:
+
+* **Software Settings**
+* **Windows Settings**
+* **Administrative Templates**
+
+### 2. Preferencias (Preferences)
+
+Son un conjunto de configuraciones que se pueden desplegar de la misma manera que las directivas, pero a diferencia de estas, **el usuario sí puede modificarlas posteriormente**. Se utilizan para establecer configuraciones habituales de manera cómoda, sin imponerlas de forma estricta.
+
+Las subcategorías de las Preferencias incluyen:
+
+* **Windows Settings**
+* **Control Panel Settings**
+
+---
+
+## Herencia de las GPO (LSDOU)
+
+La herencia es un concepto fundamental que define cómo se aplican las políticas en la jerarquía de Active Directory. Las GPO se procesan en un orden específico, conocido como **LSDOU**.
+
+| Orden | Nivel | Descripción |
+| :---: | :---: | :--- |
+| **1** | **Local** | Se aplican primero las políticas del ordenador local. |
+| **2** | **Site (Sitio)** | Le siguen las GPO enlazadas a los sitios de Active Directory. |
+| **3** | **Domain (Dominio)** | Se aplican las GPO del dominio. |
+| **4** | **OU (Unidad Organizativa)** | Por último, se aplican las GPO enlazadas a las OU, en el orden en que aparecen en la lista de enlaces. Las OU anidadas (una dentro de otra) se aplican de la más externa a la más interna. |
+
+La lógica de esta herencia es que las configuraciones más específicas prevalecen sobre las más generales. Por ejemplo, una GPO en una OU puede sobrescribir una política de dominio, ya que la OU representa un nivel más granular de la jerarquía.
+
+Existen varios elementos que pueden influir en la herencia de las GPO:
+
+* **Link Order**: El orden de los enlaces de las GPO dentro de un mismo nivel determina la precedencia.
+* **Enforced (Obligatorio)**: Si una GPO se marca como "Enforced", sus configuraciones tendrán la máxima prioridad, incluso si la herencia está bloqueada a un nivel inferior.
+* **Block Inheritance (Bloquear Herencia)**: Un administrador puede bloquear la herencia en una OU para evitar que las GPO de niveles superiores (Sitio, Dominio) afecten a esa OU.
+
+---
+
+## Configuración y Administración de GPO
+
+### Cómo se Crean y Enlazan
+
+Para crear un GPO, se navega al contenedor **Group Policy Objects** en la consola de `Group Policy Management`, se hace clic derecho y se selecciona `New`. Una vez creada, la GPO debe ser **enlazada** a un contenedor, como un Dominio, un Sitio o una Unidad Organizativa, para que sus configuraciones surtan efecto.
+
+**Enlazar** una GPO significa asociarla a un contenedor de Active Directory para que las políticas que contiene se apliquen a los usuarios y equipos dentro de ese contenedor. La principal potencia de enlazar GPO es la flexibilidad y granularidad que ofrece. Permite centralizar políticas globales a nivel de dominio y segmentar políticas personalizadas a nivel de OU para grupos específicos. Es importante destacar que no se puede enlazar GPO a los contenedores de `Computers` o `Users`.
+
+### Edición de GPO
+
+Para configurar una GPO, se hace clic derecho sobre ella y se selecciona `Edit`. Esto abre el **Group Policy Management Editor**, donde se pueden modificar las políticas de equipo y de usuario.
+
+### Filtrado de Seguridad
+
+El filtrado de seguridad permite aplicar una GPO solo a un conjunto específico de usuarios, grupos o equipos dentro del contenedor al que está enlazada. Esto se configura en la pestaña `Scope` de la GPO. Un administrador puede, por ejemplo, aplicar una política de `Firewall` a una OU, pero filtrarla para que solo se aplique a un grupo de seguridad específico dentro de esa OU, eliminando a los `Authenticated Users` por defecto.
+
+### Mejores Prácticas y Consejos
+
+* Crear GPO pequeños y específicos enlazados a las OU para facilitar la identificación y solución de problemas.
+* Utilizar la opción `Enforced` con precaución, ya que tiene la máxima prioridad y puede anular políticas más específicas.
+* Conocer el orden de procesamiento de las GPO (LSDOU) es crucial para evitar conflictos y entender el comportamiento de las políticas.
+* Usar el filtrado de seguridad para aplicar políticas de forma precisa.
+
+---
+
+## Generación de Reportes con RSoP
+
+El **Conjunto Resultante de Políticas (RSoP - Resultant Set of Policy)** es una herramienta esencial para la verificación de las configuraciones aplicadas. Muestra el efecto final de todas las GPO sobre un usuario o equipo, considerando la herencia, el orden de los enlaces, el filtrado de seguridad y los filtros WMI. Esto es vital para solucionar conflictos entre políticas.
+
+Se pueden usar varios asistentes y comandos para generar estos reportes:
+
+* **Group Policy Results Wizard**: Asistente gráfico en la consola de `Group Policy Management` que guía al usuario para seleccionar un equipo y un usuario, y luego genera un informe detallado de las configuraciones aplicadas.
+* **Group Policy Modeling Wizard**: Permite simular qué configuraciones se aplicarían a un usuario o equipo específico bajo ciertas condiciones, lo que ayuda a planificar cambios.
+* **GPResult.exe**: Un comando de línea que muestra las configuraciones de GPO aplicadas.
+
+### Comandos de Terminal para GPO
+
+A continuación se detallan los comandos clave de **Windows PowerShell** para la administración y verificación de GPO.
+
+#### `GpUpdate /Force`
+
+* **Sintaxis**: `GpUpdate /Force`
+* **Descripción**: Este comando obliga al sistema a actualizar inmediatamente todas las directivas de grupo que se le aplican.
+* **Porqué**: Se utiliza para forzar la aplicación de los GPO sin tener que esperar el intervalo de refresco automático de 90 a 120 minutos. Esto es útil para verificar que los cambios realizados en las políticas surtan efecto de inmediato.
+* **Cómo se realiza**: Se ejecuta el comando en una terminal de Windows PowerShell o Command Prompt con privilegios de administrador. El sistema mostrará un mensaje indicando que las políticas de equipo y usuario se han actualizado exitosamente. En algunos casos, especialmente con las configuraciones de equipo, puede ser necesario reiniciar el equipo para que los cambios se apliquen por completo.
+* **Objetivo**: Asegurar la aplicación instantánea de las configuraciones de GPO.
+
+#### `GpResult /R`
+
+* **Sintaxis**: `GPResult /R`
+* **Descripción**: Muestra un informe detallado en la terminal sobre las GPO que se están aplicando actualmente tanto a nivel de equipo como a nivel de usuario.
+* **Porqué**: Permite a los administradores verificar las políticas efectivas sobre un usuario o equipo específico para diagnosticar conflictos o confirmar que las configuraciones deseadas se están aplicando correctamente en el entorno de GPO complejo.
+* **Cómo se realiza**: Se ejecuta el comando en una terminal de Windows PowerShell o Command Prompt. El sistema mostrará un resumen de las políticas aplicadas, incluyendo las GPO ganadoras, el `Winning GPO`, para cada configuración.
+* **Objetivo**: Proporcionar visibilidad sobre las políticas de grupo en vigor en un equipo o usuario concreto.
+
+---
+
+## Demo Práctica de la Consola de Group Policy Management
+
+La demo práctica en una máquina virtual ilustra cómo trabajar con la consola de `Group Policy Management`.
+
+1.  **Crear un GPO**: Se crea un nuevo GPO, por ejemplo, llamado `Firewall`, en el contenedor `Group Policy Objects`. Este GPO está ahora disponible para ser enlazado.
+2.  **Enlazar un GPO**: Se hace clic derecho en el dominio o en una OU, se selecciona `Link an Existing GPO` y se elige el GPO `Firewall` para enlazarlo. Se observa que el GPO se aplica al contenedor y se puede ver su orden y herencia.
+3.  **Editar el GPO**: Se hace clic derecho en el GPO `Firewall` y se selecciona `Edit`. Se navega a **Computer Configuration > Policies > Windows Settings > Security Settings > Windows Defender Firewall with Advanced Security**. Aquí se pueden crear reglas de entrada (`Inbound Rules`), reglas de salida (`Outbound Rules`) y reglas de seguridad de conexión.
+4.  **Configurar una regla**: Se crea una nueva regla de entrada personalizada para el protocolo `ICMPv4` que solo permite las solicitudes de `Echo`, se aplica exclusivamente al perfil de dominio y se le asigna un nombre descriptivo.
+5.  **Verificar la herencia**: En la pestaña `Group Policy Inheritance` de una OU, se puede observar el orden de precedencia de los GPO aplicados. Se demuestra que al desactivar un enlace o bloquear la herencia, un GPO deja de tener efecto en la OU.
+6.  **Forzar una GPO**: Al marcar una GPO como `Enforced`, se demuestra que esta adquiere la máxima prioridad, incluso si la herencia está bloqueada en la OU, colocándose la primera en el orden de precedencia.
+7.  **Filtrado de Seguridad**: En la pestaña `Scope` de un GPO, se muestra cómo agregar un grupo de seguridad específico y eliminar a `Authenticated Users` para que la política se aplique de forma exclusiva a ese grupo.
+8.  **Generar un reporte RSoP**: Se utiliza el `Group Policy Results Wizard` para seleccionar un usuario y un equipo y generar un informe. Este informe enumera todas las configuraciones que se aplicarán al usuario al iniciar sesión en el equipo seleccionado, incluyendo el `Winning GPO` (la GPO que prevalece) para cada configuración.
+
+---
+
+Documentos de Referencia: "5-27 Directivas de configuracion de seguridad.pdf", "FSW Clase 27 – Directivas de Configuración de Seguridad.pdf"
+
+# Informe sobre Directivas de Configuración de Seguridad en Windows Server
+
+## Introducción a las Directivas de Configuración de Seguridad y su Relación con las GPO
+
+Las **Directivas de Configuración de Seguridad** son un conjunto de políticas que permiten la gestión centralizada de elementos críticos para la seguridad del sistema en un entorno de **Active Directory Domain Services (AD DS)**. Estas directivas, gestionadas a través de los **Objetos de Directiva de Grupo (GPO)**, son un excelente punto de partida para establecer una **línea base de seguridad** que fortalezca la infraestructura de una organización. Los GPO tienen una gran repercusión en la configuración de la seguridad, ya que la mayoría de las tecnologías de seguridad de Microsoft se despliegan mediante ellos.
+
+### Plantillas Administrativas
+
+Las **Plantillas Administrativas** son archivos que se almacenan en formatos `.admx` (y en formatos antiguos como `.adm` en Windows Server 2003 y versiones anteriores). Estas plantillas se utilizan para realizar modificaciones en claves específicas del registro, tanto a nivel de usuario (`HKEY_CURRENT_USER`) como a nivel de equipo (`HKEY_LOCAL_MACHINE`).
+
+Es posible crear un **repositorio central** de plantillas administrativas en un dominio con múltiples controladores de dominio (DC). Esto se logra manualmente creando una carpeta llamada `Policy Definitions` en la ruta `\\FQDN\SYSVOL\FQDN\Policies`. Una vez creada, todos los DC del dominio detectarán y utilizarán este repositorio. Las plantillas de seguridad también se pueden importar y exportar mediante herramientas como `Secedit.exe`, el complemento de plantillas de seguridad, la consola de Group Policy Management o el Security Compliance Manager (SCM).
+
+Para importar una plantilla de seguridad en un GPO existente, se debe seguir el siguiente procedimiento:
+
+1.  Crear y editar un GPO.
+2.  En el `Group Policy Management Editor`, navegar a la ruta `Computer Configuration\Policies\Windows Settings\Security Settings`.
+3.  Hacer clic derecho en `Security Settings` y seleccionar la opción `Import Policy`.
+4.  Elegir el archivo de la plantilla de seguridad deseada.
+
+---
+
+## Directivas de Cuenta
+
+Las **Directivas de Cuenta** gestionan las características de inicio de sesión y autenticación de los usuarios. Se configuran dentro de `Computer Configuration > Policies > Windows Settings > Security Settings > Account Policies` y se dividen en tres categorías:
+
+### 1. Directivas de Contraseña (Password Policy)
+
+Estas directivas, que son únicas para todo el dominio, solo pueden definirse en la **Default Domain Policy**. Algunas configuraciones incluyen:
+
+* **Enforce password history**: Define la cantidad de contraseñas que se recordarán para evitar su reutilización.
+* **Maximum password age**: Establece la vigencia máxima de una contraseña antes de que expire.
+* **Minimum password length**: Determina la longitud mínima que debe tener una contraseña.
+* **Password must meet complexity requirements**: Requiere que las contraseñas contengan mayúsculas, minúsculas, números y caracteres especiales.
+
+Si se desea una directiva de contraseña diferente para un grupo de usuarios específico, se deben utilizar los **Password Settings Objects (PSOs)**, que son una herramienta ajena a los GPO.
+
+### 2. Directivas de Bloqueo de Cuenta (Account Lockout Policy)
+
+Estas directivas gestionan el número de intentos de inicio de sesión fallidos permitidos antes de que una cuenta se bloquee. Su configuración es clave para mitigar los ataques de **fuerza bruta** contra las identidades de usuario. Al limitar los intentos, se ralentiza significativamente la capacidad de un atacante para probar múltiples contraseñas. Un ejemplo de configuración sería bloquear la cuenta por 30 minutos después de 5 intentos fallidos.
+
+### 3. Directivas de Kerberos (Kerberos Policy)
+
+**Kerberos** es el protocolo de autenticación utilizado en Active Directory. El controlador de dominio (DC) emite tickets TGT (Ticket Granting Ticket) a los usuarios al autenticarse. Estos tickets se utilizan para acceder a los diferentes recursos de la red. Las directivas de Kerberos permiten configurar los tiempos de vigencia de estos tickets y otros valores relacionados.
+
+---
+
+## Directivas Locales
+
+Las **Directivas Locales** se encuentran en `Computer Configuration > Policies > Windows Settings > Security Settings > Local Policies` y son esenciales para el proceso de fortificación (**hardening**) de Active Directory. Se dividen en tres secciones:
+
+### 1. Directivas de Auditoría (Audit Policy)
+
+Estas directivas permiten habilitar registros específicos en el **Visor de Eventos** para monitorizar eventos del sistema. Es posible auditar el **éxito** o el **fallo** de una acción, como el inicio de sesión de un usuario. Esto es crucial para detectar actividades sospechosas o accesos no autorizados. Por ejemplo, al auditar los fallos de inicio de sesión, el sistema generará un registro cada vez que un usuario se equivoque en su contraseña.
+
+### 2. Derechos de Usuario (User Rights)
+
+Los derechos de usuario son los privilegios que tiene un usuario. Estas directivas definen las acciones que un usuario puede o no puede realizar. La mayoría de estas directivas no vienen definidas por defecto, lo que significa que un usuario estándar puede realizar ciertas acciones a menos que se restrinjan explícitamente a través de un GPO. Algunos ejemplos de derechos de usuario incluyen:
+
+* Unir un equipo al dominio.
+* Iniciar sesión localmente.
+* Conectarse por escritorio remoto (RDS).
+* Realizar copias de seguridad de archivos o directorios.
+
+### 3. Opciones de Seguridad (Security Options)
+
+Son configuraciones básicas que pueden tener un impacto significativo en la seguridad de un entorno de Active Directory. Ejemplos de estas opciones son:
+
+* No mostrar el nombre del último usuario que inició sesión.
+* Renombrar la cuenta de administrador para dificultar los ataques dirigidos.
+* Configurar opciones relacionadas con dispositivos extraíbles o la instalación de drivers.
+
+### Directivas Avanzadas de Auditoría
+
+Las **Directivas Avanzadas de Auditoría** ofrecen un control más granular y específico sobre los registros de eventos que se generan. Son más detalladas que las directivas de auditoría convencionales. Para evitar conflictos, es crucial habilitar la directiva `Audit: Force audit policy subcategory settings (Windows Vista or later) to override audit policy category settings` en `Computer Configuration\Policies\Windows Settings\Security Settings\Local Policies\Security Options` si se van a utilizar las directivas de auditoría avanzadas.
+
+---
+
+## Resolución de Ejercicio Práctico
+
+A continuación, se detalla la resolución del ejercicio propuesto, que cubre la configuración de directivas de cuenta y auditoría, y la verificación de los registros en el Visor de Eventos.
+
+### Paso 1: Configurar Directivas de Contraseña y Bloqueo de Cuenta
+
+1.  En el `Server Manager`, ir a `Tools` y abrir la consola de `Group Policy Management`.
+2.  Expandir el árbol del dominio, hacer clic derecho en `Default Domain Policy` y seleccionar `Edit`.
+3.  Navegar a `Computer Configuration > Policies > Windows Settings > Security Settings > Account Policies > Account Lockout Policy`.
+4.  Hacer doble clic en `Account lockout threshold` y definir el número de intentos fallidos. En este caso, se define en `5`.
+5.  Aceptar. Esto configurará automáticamente `Account lockout duration` (por 30 minutos por defecto) y `Reset account lockout counter after`.
+6.  Editar `Account lockout duration` y establecer el valor a `3` minutos para un bloqueo más breve.
+7.  Ahora, para la directiva de contraseñas, ir a `Account Policies > Password Policy`.
+8.  Aquí se pueden ajustar valores como `Minimum password length`, `Password must meet complexity requirements`, etc., según las políticas de la organización.
+
+### Paso 2: Configurar Auditoría de Inicio de Sesión y Acceso a Objetos
+
+1.  En el `Group Policy Management Editor`, navegar a `Computer Configuration > Policies > Windows Settings > Security Settings > Local Policies > Audit Policy`.
+2.  Hacer doble clic en `Audit account logon events` y `Audit object access`.
+3.  En cada una de ellas, marcar las casillas **Success** y **Failure** para auditar ambos tipos de eventos.
+4.  Cerrar el editor de GPO.
+
+### Paso 3: Verificar los Registros en el Visor de Eventos
+
+1.  Asegurarse de que las directivas se apliquen forzando la actualización en PowerShell con el comando `gpupdate /force`.
+2.  Reiniciar el equipo para que las configuraciones de equipo se apliquen correctamente.
+3.  Una vez reiniciado, se realizan las siguientes acciones para generar registros:
+    * Intentar iniciar sesión varias veces con una contraseña incorrecta para generar eventos de `Failure`.
+    * Iniciar sesión correctamente para generar eventos de `Success`.
+    * Acceder a una carpeta y a sus documentos, como una carpeta de nombre `Confidencial`, en la que se ha habilitado la auditoría de acceso a objetos desde sus propiedades de seguridad. Esto generará registros de `Audit object access`.
+4.  Abrir el `Event Viewer` desde `Server Manager > Tools`.
+5.  En el `Event Viewer`, navegar a `Windows Logs > Security`. Aquí se pueden ver los registros correspondientes a los intentos de inicio de sesión (éxitos y fallos) y los accesos a los objetos que se han auditado.
+6.  Haciendo doble clic en un evento, como el **Event ID 4771** para un intento de inicio de sesión fallido, se pueden ver los detalles, incluyendo el nombre del usuario, la hora y otra información relevante.
+7.  Para una monitorización continua, se puede anclar una tarea a un evento específico, como el **Event ID 4771**, para recibir notificaciones por correo electrónico cuando se genere dicho evento.
+
+---
+
+# Administración de Identidades y Herramientas de Seguridad en Windows Server
+
+## Introducción a la Administración de Identidades 
+
+La administración de identidades es uno de los desafíos más importantes en la fortificación de cualquier entorno tecnológico. Una gestión adecuada de las credenciales y las autorizaciones a los recursos es un paso fundamental para reducir el riesgo de accesos no autorizados. Un control deficiente podría permitir que un atacante o un malware utilice una identidad, un token o un ticket TGT para acceder a servicios a los que no debería tener permiso. Windows Server ofrece varias herramientas para proteger cuentas de usuario o servicio y administrar políticas de contraseñas de forma específica para las necesidades de cada organización.
+
+Las principales recomendaciones para mitigar ataques conocidos incluyen:
+* **Asegurar las cuentas de usuario y contraseñas**.
+* **Gestionar adecuadamente los grupos con privilegios**.
+* **Auditar los cambios en recursos críticos** de la organización.
+* **Implementar autenticaciones seguras** y utilizar segundos factores de autenticación.
+* **Proteger la actividad de la red** para detectar tráfico inusual y segregar servicios importantes mediante la autenticación con certificados.
+* **Establecer la administración de cuentas**, aprovisionamiento y políticas para usuarios y equipos, planificando no solo la creación, sino también la desactivación o eliminación de identidades.
+* **Gestionar la seguridad física de los equipos**.
+
+***
+
+## Herramientas Clave para la Securización de Identidades
+
+Windows Server proporciona varias herramientas integradas y descargables para securizar la gestión de identidades, cada una con un propósito específico.
+
+### Grupos Restringidos (Restricted Groups)
+
+Los **Grupos Restringidos** son una característica de seguridad dentro de los **Objetos de Directiva de Grupo (GPO)** que permite a los administradores controlar de forma estricta la pertenencia a los grupos locales de los equipos del dominio. Su función principal es asegurar que solo los usuarios y grupos de confianza formen parte de grupos de alto privilegio en los equipos locales, como el grupo de `Administradores`. Esto es crucial para la seguridad, ya que evita la escalada de privilegios por parte de usuarios no autorizados.
+
+**Importante**: Los grupos restringidos se utilizan para administrar la pertenencia a **grupos locales de equipos**, no a grupos de dominio.
+
+La configuración de un grupo restringido ofrece dos opciones principales para gestionar la pertenencia, cada una con un comportamiento diferente:
+
+* **Members of this group (Miembros de este grupo)**: Si se utiliza esta opción, la lista de usuarios o grupos que se añadan será la **única** permitida en el grupo local restringido. Todos los miembros actuales que no estén en la lista, a excepción del grupo de administradores del dominio, serán eliminados automáticamente. Se utiliza para establecer una lista de miembros exclusiva.
+* **This group is a member of (Este grupo es miembro de)**: Esta opción solo añade el grupo a un grupo local existente sin eliminar a otros miembros. Los grupos o usuarios que ya tuvieran privilegios de administración local en los equipos del dominio **permanecerán**. Se utiliza para agregar privilegios sin sobrescribir la configuración existente.
+
+### Grupo de Usuarios Protegidos (Protected Users Security Group)
+
+El **Grupo de Usuarios Protegidos** es un grupo de seguridad especial en Active Directory, disponible desde Windows Server 2012 R2, diseñado para mitigar amenazas de robo de credenciales como los ataques Pass-the-Hash (PtH) y Pass-the-Ticket (PtT). Cuando un usuario o un grupo se añade a este grupo, se aplican automáticamente una serie de medidas de seguridad adicionales:
+
+* Se prohíbe el uso de protocolos de autenticación considerados inseguros, como **NTLM**, Digest authentication o Credential Security Support Provider (**CredSSP**).
+* Se desactiva la delegación Kerberos restringida o no restringida.
+* El cifrado de Kerberos debe soportar **AES**, y se deshabilitan los tipos de cifrado antiguos como **DES** y **RC4**.
+* No se guardan las contraseñas en caché, lo que hace que los dispositivos que dependan de estos protocolos no puedan autenticarse en el dominio.
+* El tiempo de vida de los tickets TGT de Kerberos se establece por defecto en **cuatro horas**.
+
+Este grupo está pensado para cuentas específicas y de alto privilegio o con acceso a información confidencial, no para todos los usuarios de la organización, ya que puede romper la compatibilidad con servicios que dependan de los protocolos deshabilitados.
+
+### Demo práctica: Gestión de Usuarios Protegidos
+
+En una demo práctica, se muestra cómo gestionar el grupo `Protected Users`:
+
+1.  En la consola de `Active Directory Administrative Center (ADAC)`, se navega a la parte de `Users` del dominio.
+2.  Se localiza el grupo `Protected Users`, que viene creado por defecto.
+3.  Se accede a las propiedades del grupo y, en la pestaña de `Members`, se hace clic en `Add`.
+4.  Se selecciona un grupo de seguridad de dominio, como el grupo `IT` o `Auditores`, y se añade a la lista de miembros.
+5.  Una vez añadido, los miembros de ese grupo heredan automáticamente las protecciones adicionales contra el robo de credenciales.
+
+### Objetos de Configuración de Contraseña (PSO)
+
+Los **Password Settings Objects (PSO)**, también conocidos como **Fine-Grained Password Policies (FGPP)**, permiten aplicar diferentes políticas de contraseñas a usuarios o grupos específicos dentro de un mismo dominio. Anteriormente, solo se podía aplicar una única política de contraseñas a todo el dominio a través de la `Default Domain Policy`.
+
+Los PSO se aplican a objetos de usuario, `InetOrgPerson` o grupos de seguridad global. Para aplicar un PSO, se modifica un atributo llamado **`msDS-PSOApplied`**. La **precedencia** se gestiona con el atributo `msDS-PasswordSettingsPrecedence`, donde el valor numérico más bajo indica la prioridad más alta en caso de que un usuario pertenezca a varios grupos con PSO diferentes.
+
+Los PSO se pueden configurar de dos maneras:
+* **Windows PowerShell**: Utilizando cmdlets como `New-ADFineGrainedPasswordPolicy` para crear el PSO y `Add-ADFineGrainedPasswordPolicySubject` para asignarlo a un grupo o usuario.
+* **Active Directory Administrative Center (ADAC)**: Se navega a `Dominio/System/Password Settings Container` para crear un nuevo PSO y luego se asigna a través de las propiedades del usuario o grupo.
+
+### Demo Práctica: Gestión de Objetos de Configuración de Contraseña (PSO)
+
+Esta demostración detalla cómo crear y asignar un PSO específico a un grupo de seguridad en Active Directory, en este caso, el grupo **Auditores**. La finalidad es aplicar una política de contraseñas más estricta a este grupo, sin afectar al resto del dominio.
+
+#### Paso 1: Acceder al Contenedor de Configuración de Contraseñas
+1.  Abre el **Centro de Administración de Active Directory (ADAC)** desde `Server Manager > Tools`.
+2.  En el panel de navegación, selecciona el nodo del dominio y navega hasta la ruta `System > Password Settings Container`.
+
+#### Paso 2: Crear un Nuevo PSO
+1.  Haz clic derecho en `Password Settings Container` y selecciona `New > Password Settings`.
+2.  Se abrirá un panel de configuración para definir la nueva política. Asigna el nombre **AuditorsPSO** al objeto.
+3.  Establece una **precedencia** para el PSO. La precedencia es un valor numérico que determina la prioridad en caso de conflicto con otras políticas. Un valor más bajo indica una mayor prioridad. Para este ejemplo, se le asigna un valor de `7`.
+4.  Configura las características de la contraseña según sea necesario (por ejemplo, longitud mínima, requisitos de complejidad, historial, etc.). También es posible habilitar la parte de bloqueo de cuenta desde aquí.
+
+#### Paso 3: Asignar el PSO al Grupo de Seguridad
+1.  Dentro del panel de configuración del PSO, busca la sección `Directly Applies To` o una opción similar para asignar la política.
+2.  Haz clic en `Add` y selecciona el grupo de seguridad **Auditores** para enlazar la política a este grupo.
+3.  Confirma la configuración y cierra el panel.
+
+#### Verificación de la Asignación
+1.  Para verificar que la asignación se realizó correctamente, navega a las propiedades del grupo **Auditores** en el ADAC.
+2.  En la pestaña `Password Settings`, se debería ver el PSO **AuditorsPSO** listado y asociado.
+3.  Si revisas la configuración de un usuario que sea miembro del grupo `Auditores`, como el usuario `Tom`, verás que el PSO `AuditorsPSO` no aparece en su configuración de contraseña individual, pero sí se le aplica porque pertenece al grupo. Este comportamiento es normal y muestra que la política está siendo heredada a través de la pertenencia al grupo de seguridad.
+
+***
+
+## LAPS (Local Administrator Password Solution)
+
+**LAPS** es una herramienta de Microsoft que soluciona el problema de tener la misma contraseña de administrador local en todos los equipos del dominio. LAPS genera una contraseña aleatoria y **única** para la cuenta de administrador local de cada equipo.
+
+El funcionamiento de LAPS incluye los siguientes pasos:
+1.  Verifica si la contraseña de la cuenta de administrador local ha expirado.
+2.  Cambia la contraseña a un nuevo valor aleatorio y largo.
+3.  Transmite la nueva contraseña y la fecha de expiración a Active Directory, donde se almacena en un atributo especial y sensible del objeto de la cuenta de equipo.
+4.  Solo los usuarios y grupos autorizados, como los administradores de dominio, pueden leer estas contraseñas.
+
+El uso de LAPS mejora significativamente la seguridad contra ataques de **movimiento lateral**.
+
+**Requisitos de LAPS**:
+* Equipos con Windows x86 o x64 en un dominio.
+* Nivel funcional de dominio de Windows Server 2003 o superior.
+* Requiere extender el esquema de Active Directory.
+* Instalar el cliente de LAPS en los equipos a gestionar.
+* Requiere .NET Framework 4.0 y PowerShell 2.0 o superior.
+
+***
+
+## Resolución del Ejercicio Propuesto
+
+El ejercicio práctico consiste en crear un grupo de seguridad, asignarlo a `Protected Users` y aplicarle un PSO personalizado.
+
+### Paso 1: Crear un grupo de seguridad y un usuario
+
+1.  En el `Server Manager`, ir a `Tools` y abrir `Active Directory Users and Computers`.
+2.  Seleccionar el contenedor `Users` y crear un nuevo usuario llamado **Tom**.
+3.  Crear un nuevo grupo de seguridad llamado **Auditores**. Es crucial que sea un **grupo de seguridad global** para poder asignarle un PSO más adelante.
+4.  Añadir al usuario `Tom` como miembro del grupo `Auditores`.
+
+### Paso 2: Asignar el grupo "Auditores" a "Usuarios Protegidos"
+
+1.  En el `Server Manager`, ir a `Tools` y abrir el `Active Directory Administrative Center`.
+2.  En la navegación, ir a `Users` y buscar el grupo **`Protected Users`**.
+3.  Acceder a las propiedades del grupo `Protected Users`, ir a la pestaña `Members` y hacer clic en `Add`.
+4.  Se selecciona el grupo **`Auditores`** y se confirma. De esta forma, el grupo `Auditores` y sus miembros obtendrán las protecciones adicionales.
+
+### Paso 3: Crear y asignar un Objeto de Configuración de Contraseña (PSO)
+
+1.  En `Active Directory Administrative Center`, navegar a `System` y buscar el contenedor **`Password Settings Container`**.
+2.  Hacer clic derecho en el contenedor y seleccionar `New > Password Settings`.
+3.  Configurar un nuevo PSO llamado **`AuditorsPSO`** con las políticas deseadas, como una longitud mínima de contraseña o la duración del bloqueo de cuenta.
+4.  Asignar una **precedencia**; por ejemplo, `1`.
+5.  En la sección `Directly Applies To`, hacer clic en `Add` y seleccionar el grupo **`Auditores`** para enlazar la política.
+6.  Verificar que el PSO se ha asignado correctamente revisando las propiedades del grupo `Auditores` en la pestaña `Password Settings`.
+7.  Al revisar las propiedades del usuario `Tom`, se observa que en la pestaña `Member Of`, pertenece al grupo `Auditores`. Aunque el PSO no se muestra directamente en la configuración de contraseña del usuario `Tom`, las configuraciones de `AuditorsPSO` se le aplican porque es miembro del grupo `Auditores`.
+
+---
+

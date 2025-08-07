@@ -12,7 +12,7 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Redacta un informe estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos en profundidad utilizando los documentos proporcionados: 
+Redacta un informe muy extenso y detallado estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos en profundidad utilizando los documentos proporcionados: 
 
 -
 -
@@ -57,7 +57,7 @@ Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna f
 ---------------------------------------
 
 
-En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: sin quitar los documentos listadosquitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia al informe XXXXX, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: quitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
 
 ----------------------------------------
 
@@ -75,16 +75,18 @@ Se te proporcionarán los siguientes documentos en formato PDF para la elaboraci
 
 "XXXXXX": Transcript del profesor sincronizado con el siguiente documento pdf de capturas de pantalla, explicando XXXXXX.
 
-"XXXXXX": Incluye screenshots de diapositivas que documentan XXXXXX. Hay varias demos explicando de manera practica en una máquina virtual cómo trabajar con dicha teoria de XXXXXXXXXX, cómo funciona y en qué contexto utilizar cada cosa. Estas imágenes están sincronizadas cronológicamente con el transcript anterior, el profesor explica éstas diapositivas.
+"XXXXXX": Incluye screenshots de diapositivas que enriquecen el contenido. Hay varias demos explicando de manera practica en una máquina virtual cómo trabajar con dicha teoria de XXXXXXXXXX, cómo funciona y en qué contexto utilizar cada cosa. Estas imágenes están sincronizadas cronológicamente con el transcript anterior, el profesor explica éstas diapositivas.
 
 Tarea Principal:
 Genera un informe detallado en formato Markdown y en castellano, utilizando la información clave de los documentos de referencia. El informe debe centrarse en XXXXXX.
 
-Redacta un informe estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos en profundidad utilizando los documentos proporcionados: 
+Redacta un informe muy extenso y detallado estructurando y organizando toda la información relevante presente en los documentos que te he proporcionado sobre XXXXX, centrándote en los siguientes aspectos y expandiendo cada uno de ellos en profundidad utilizando los documentos proporcionados: 
 
 -
 -
 -
+-Demo práctica en una máquina virtual
+-Resolución del ejercicio propuesto, paso a paso, en el cual se nos pide: 
 
 Detalla los conceptos aprendidos.
 
@@ -125,7 +127,7 @@ Revisión Final: Antes de generar la respuesta, verifica que **no haya ninguna f
 ------------------------
 
 
-En referencia a éste informe que me acabas de proporcionar, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: quitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+En referencia al informe XXXXX, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: quitar las citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
 
 
 
