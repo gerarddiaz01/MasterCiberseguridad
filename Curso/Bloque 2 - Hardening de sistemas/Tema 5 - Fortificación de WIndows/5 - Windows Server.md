@@ -74,6 +74,73 @@ Windows Server y sus herramientas son fundamentales para la ciberseguridad y la 
 
 ---
 
+Documentos de Referencia: "5-21 Event viewer.pdf", "FSW Clase 21 – Visor de Eventos.pdf"
+
+### Visor de Eventos (Event Viewer) y Monitorización de Registros en Windows Server
+
+#### 1. Configuración y Relación de los Registros con la Seguridad
+
+El registro de eventos en Windows Server proporciona información detallada sobre el funcionamiento del sistema operativo, las aplicaciones y los servicios. Los registros se clasifican en eventos de información, advertencia, error y seguridad. La monitorización de estos registros es fundamental para la fortificación del sistema, ya que una actividad inusual en los logs puede ser un indicio de un ataque, un fallo en el sistema o una configuración incorrecta.
+
+No todos los registros se generan de forma automática. Algunos, como los registros de auditoría de seguridad o de depuración (`debugging`), requieren una configuración previa para ser activados. Sin esta configuración, los eventos no se generarán y no se podrán visualizar. Esta relación entre la configuración y la monitorización es vital para una gestión de seguridad proactiva.
+
+Existen varias maneras de configurar los registros, entre las que se incluyen:
+* **Configuración Local:** Habilitar manualmente los registros necesarios para tareas específicas, como la auditoría.
+* **Configuración Centralizada mediante Directivas de Grupo (GPO):** Se pueden configurar los ajustes del registro de eventos de forma centralizada para múltiples equipos. La ruta para esta configuración se encuentra en `Configuración de equipo\Políticas\Plantillas administrativas\Componentes de Windows\Servicio de registro de eventos`. Esta es una forma recomendada de mantener una configuración coherente y segura en toda la infraestructura.
+
+#### 2. Visor de Eventos (Event Viewer)
+
+El Visor de Eventos es la consola principal para ver los registros que se generan en el sistema operativo. Se puede acceder a ella desde el menú de `Herramientas` de `Server Manager`.
+
+##### 2.1. Secciones del Visor de Eventos
+
+Para facilitar la consulta, el Visor de Eventos divide la información en cuatro secciones principales:
+
+* **Vistas Personalizadas (Custom Views):** Permiten agrupar eventos de un rol específico o crear vistas personalizadas con filtros sobre los eventos que nos interesa monitorizar. Si el servidor tiene roles instalados, se generarán automáticamente vistas para esos roles (por ejemplo, para el servicio DNS o Active Directory). Esto permite a un administrador centrarse en los registros relevantes para una tarea o función específica.
+* **Registros de Windows (Windows Logs):** Estos se clasifican en las siguientes categorías:
+    * `Application`: Eventos generados por las aplicaciones.
+    * `Security`: Eventos de auditoría de seguridad, como los inicios de sesión. Para que se generen ciertos eventos de seguridad, la auditoría debe estar previamente activada.
+    * `Setup`: Eventos relacionados con la instalación del sistema operativo y sus componentes.
+    * `System`: Eventos del sistema operativo y sus componentes.
+* **Registros de Aplicaciones y Servicios (Applications and Services Events):** Organiza los eventos por aplicación y fabricante. Dentro de la carpeta de Microsoft/Windows, se pueden encontrar los eventos asociados a componentes específicos de Windows, lo que es muy útil para diagnosticar problemas en una funcionalidad concreta como `BitLocker` o `DFS`.
+* **Suscripciones (Subscriptions):** Esta sección se utiliza para gestionar las suscripciones de eventos, que permiten a un servidor actuar como un contenedor central para los registros de otros equipos. Los eventos recibidos se muestran en la sección de **Eventos reenviados (Forwarded Events)**.
+
+##### 2.2. Funcionalidades Prácticas del Visor de Eventos
+
+* **Propiedades de Eventos:** Al seleccionar un evento, se pueden ver sus propiedades y detalles técnicos. En algunos casos, incluso puede ofrecer posibles soluciones al problema.
+* **Anclar Tareas a Eventos:** Una función poderosa es la capacidad de anclar una tarea a un evento específico. Por ejemplo, se puede configurar para que, ante múltiples fallos de inicio de sesión de un usuario administrador, se envíe un correo electrónico de alerta. Esto ayuda a detectar ataques de fuerza bruta. También se puede programar un script para reiniciar un servicio que ha fallado, automatizando la solución de problemas.
+* **Filtros:** Se pueden crear filtros personalizados para buscar eventos específicos, como los de seguridad (`Security`) que sean críticos o de error en los últimos 30 días. Esto facilita la revisión de eventos importantes sin tener que examinar todos los registros.
+* **Registro Centralizado:** Los registros pueden ser exportados y guardados, lo que permite su análisis por otros colegas o su almacenamiento para futuras auditorías.
+
+#### 3. Suscripción de Eventos (Event Subscription)
+
+La suscripción de eventos es una forma de centralizar la monitorización. Permite que varios equipos envíen sus registros a un servidor que actúa como contenedor central.
+
+##### 3.1. Ventajas de la Suscripción de Eventos
+
+* **Seguridad:** Un atacante puede tratar de borrar los registros de un equipo para ocultar su actividad. Si esos registros se han enviado a un servidor central, será mucho más difícil eliminarlos. Los registros en el servidor central serán más fiables para un análisis forense.
+* **Fiabilidad:** Si un equipo deja de funcionar y no se puede acceder a sus registros, los logs enviados al servidor central pueden ayudar a entender la causa del fallo.
+
+##### 3.2. Proceso de Configuración de la Suscripción de Eventos
+
+Para habilitar la suscripción de eventos, se deben seguir estos pasos:
+
+1.  **Permisos de Administrador:** El equipo que actuará como contenedor central debe ser añadido al grupo de administradores locales de cada equipo origen que enviará los datos.
+2.  **Configuración del Origen:** En cada equipo que enviará los registros, se debe ejecutar el siguiente comando en una consola con privilegios elevados:
+    * `winrm quickconfig`
+3.  **Configuración del Contenedor Central:** En el servidor que recibirá los registros, se debe ejecutar el siguiente comando en una consola:
+    * `wecutil qc`
+4.  **Configurar la Suscripción:** Una vez configurados los permisos y ejecutados los comandos, se debe configurar la suscripción en el servidor de destino.
+5.  **Verificar la Replicación:** Los eventos recibidos aparecerán en la sección `Eventos reenviados`, con el nombre de la máquina que los originó.
+
+#### 4. Gestión de Eventos desde Server Manager y Directivas de Grupo
+
+Los eventos del sistema también se pueden gestionar y visualizar de forma centralizada desde `Server Manager`. Aunque Server Manager muestra los registros de eventos de los servidores conectados, es importante tener en cuenta que habilitar un gran número de eventos para ser vistos en esta consola puede ralentizar su rendimiento.
+
+Para una configuración a gran escala, se pueden utilizar **objetos de directiva de grupo (GPO)** para configurar los ajustes de los registros de eventos de forma centralizada en toda la organización, en lugar de hacerlo manualmente en cada equipo. Esto permite una gestión más eficiente y uniforme de las políticas de auditoría y seguridad.
+
+---
+
 Documentos de Referencia: "5-19 Ejercicio windows server.pdf", "FSW Clase 19 – Solución Ejercicio.pdf"
 
 ### Instalación y Verificación de Internet Information Services (IIS) en Windows Server
@@ -974,4 +1041,483 @@ El ejercicio práctico consiste en crear un grupo de seguridad, asignarlo a `Pro
 7.  Al revisar las propiedades del usuario `Tom`, se observa que en la pestaña `Member Of`, pertenece al grupo `Auditores`. Aunque el PSO no se muestra directamente en la configuración de contraseña del usuario `Tom`, las configuraciones de `AuditorsPSO` se le aplican porque es miembro del grupo `Auditores`.
 
 ---
+
+
+Documentos de Referencia: "FSW Clase 31 – Protección de Identidad.pdf", "5-31 Protección de Identidades.pdf"
+
+# Informe Detallado y Enriquecido sobre Protección de Identidades y Credenciales
+
+## Introducción a la Protección de Identidades y Credenciales
+
+La gestión de identidades y credenciales es un proceso crítico en las organizaciones actuales, y Windows Server ofrece un conjunto de tecnologías para afrontar los desafíos de seguridad inherentes a este proceso. Por defecto, las credenciales de las últimas 10 cuentas de usuario se almacenan en caché de forma local en los equipos, lo que representa un riesgo de seguridad que podría ser explotado en un ataque contra las credenciales de la organización. Para mitigar estos riesgos, Microsoft ha desarrollado varias tecnologías.
+
+-----
+
+## Tecnologías para la Protección de Identidades en Active Directory
+
+### Protected User Group
+
+El **Protected User Group** es una característica de seguridad que ayuda a prevenir el almacenamiento en caché de perfiles y credenciales en los equipos. Para su funcionamiento, requiere autenticación mediante **Kerberos** y limita la duración de los tickets de concesión de tickets (TGT) a un máximo de cuatro horas. Una limitación importante de esta característica es que no permite el inicio de sesión sin conexión (offline).
+
+-----
+
+### Authentication Policies
+
+Las **Authentication Policies** son un nuevo tipo de objeto en el Directorio Activo (AD DS) que permiten configurar políticas de autenticación de manera más restrictiva para cuentas de usuario, servicio y equipos. Estas políticas ofrecen la posibilidad de personalizar los **tickets TGT** y, lo que es más importante, pueden utilizar **claims** de **Dynamic Access Control (DAC)** para definir condiciones de acceso personalizadas.
+
+#### Dynamic Access Control (DAC) y Claims
+
+DAC es una tecnología muy interesante que enriquece el sistema de permisos al permitir la creación de "claims". Un claim es un pequeño token o pieza de información que se puede adjuntar a cualquier objeto de Active Directory, ya sea un usuario, un servicio, una aplicación o un documento. Esto permite establecer condiciones de acceso mucho más específicas.
+
+Por ejemplo, se podría configurar una política de acceso a una carpeta que permita a un usuario leer y escribir de forma local, pero solo leer si el acceso es remoto. Sin embargo, si ese usuario tuviera un claim con la etiqueta "Jefe de Departamento", se le podría conceder permiso para modificar la carpeta incluso de forma remota, anulando la restricción general. Esta tecnología también se puede integrar con otros servicios, como los servicios federados del Directorio Activo (Federation Service).
+
+#### Requisitos para las Authentication Policies
+
+Para poder implementar Authentication Policies, el entorno debe cumplir con los siguientes requisitos:
+
+  * Todos los controladores de dominio deben ser **Windows Server 2012 R2** o una versión posterior.
+  * El nivel funcional del dominio debe ser al menos **Windows 2012 R2**.
+  * Los controladores de dominio deben estar configurados para soportar **Dynamic Access Control (DAC)**.
+  * Las computadoras deben estar configuradas para soportar **DAC**.
+
+#### Parámetros de Configuración de Authentication Policies
+
+Al configurar una política de autenticación, se pueden establecer los siguientes parámetros:
+
+  * **Nombre y Descripción**: Para identificar la política.
+  * **Modo de Aplicación**: La política puede aplicarse de manera restrictiva o en **modo de auditoría**. El modo de auditoría permite validar las restricciones y generar registros sin que la política evite la acción, lo que es útil para observar su funcionamiento antes de un despliegue completo.
+  * **Cuentas**: Se pueden definir las cuentas de usuario, servicio y equipos de forma separada.
+  * **Condiciones de Control de Acceso**: Es posible definir el tiempo de vida de los tickets TGT y las condiciones de control de acceso utilizando los claims de DAC, para especificar qué usuarios o servicios pueden utilizar qué dispositivos.
+
+-----
+
+### Authentication Policy Silos
+
+Los **Authentication Policy Silos** son objetos de AD DS diseñados para simplificar la administración. Permiten a los administradores agrupar cuentas de usuario, servicio y equipos en un mismo ámbito de seguridad para aplicarles de forma centralizada la misma política de autenticación. Además de agrupar cuentas, los silos pueden restringir el acceso a estructuras de archivos únicamente a las identidades validadas por un silo específico. Al igual que las Authentication Policies, los silos pueden configurarse en modo de auditoría o restrictivo.
+
+-----
+
+## Credential Guard y Remote Credential Guard
+
+### Credential Guard
+
+**Credential Guard** es una tecnología que aísla las credenciales para protegerlas de ataques. En un sistema Windows sin esta protección, las credenciales, como los hashes NTLM y los tickets TGT de Kerberos, se almacenan en la memoria del proceso de la **Local Security Authority (LSA)**. Este proceso es vulnerable a ataques de extracción de credenciales mediante herramientas como Mimikatz.
+
+Credential Guard contrarresta esto moviendo las credenciales a un proceso de **LSA aislado** que permanece separado del resto del sistema mediante virtualización. Este proceso aislado contiene un conjunto mínimo de binarios firmados por un certificado de confianza y se comunica con la LSA principal mediante **RPC** (Remote Procedure Call). Si un atacante intenta realizar un volcado de memoria de la LSA principal, no encontrará secretos ni credenciales. Si intenta volcar la memoria de la LSA aislada, los datos estarán cifrados, haciendo que los ataques de extracción de credenciales sean inútiles.
+
+Algunos atacantes intentan deshabilitar Credential Guard reiniciando el dispositivo. Sin embargo, si la protección está configurada para el arranque **UEFI**, el sistema operativo Windows protege las características para evitar su modificación, lo que frustra esta estrategia. Una configuración adecuada de Credential Guard dificulta los ataques de **escalada horizontal o vertical**, donde un atacante utiliza credenciales robadas para acceder a otros dispositivos o escalar privilegios.
+
+#### Inconvenientes y Requisitos de Credential Guard
+
+La implementación de Credential Guard es compleja, especialmente en máquinas virtuales, debido a sus estrictos requisitos de hardware:
+
+  * **Arquitectura**: Se requiere una arquitectura **x64**.
+  * **Firmware**: Se necesita una versión de firmware **UEFI 2.3.1** o superior.
+  * **TPM**: Se requiere un Módulo de Plataforma Segura (**TPM**) versión 1.2 o 2.0.
+  * **Sistema Operativo**: Compatible con **Windows Server 2016**, **Windows 10 Enterprise** y **Windows Enterprise IoT**.
+  * **Virtualización**: Debe haber soporte para las extensiones de virtualización **Intel VT-x**.
+  * **Arranque Seguro**: Requiere un proceso de actualización de firmware seguro, **Secure Boot**, **Secure MOR**, y soporte de firmware para la protección **SMM** (System Management Mode) a través de Windows Update.
+  * **Protección DMA**: La protección **DMA** y la opción Secure Boot en las políticas de grupo requieren hardware compatible.
+
+Debido a su dependencia de la virtualización, es complicado usar Credential Guard en máquinas virtuales, ya que los hipervisores (como VirtualBox o VMware) a menudo no exponen todas las capacidades de virtualización del hardware físico a la máquina virtual. Para que funcione en una VM, se necesita un entorno con **virtualización anidada**. Por ejemplo, **Hyper-V** permite que una VM actúe como un hipervisor, dándole acceso al hardware subyacente y a sus capacidades de virtualización, lo que permite que Credential Guard se active.
+
+Credential Guard también restringe el uso de ciertos protocolos considerados inseguros: no permite la delegación irrestricta de Kerberos, el cifrado DES ni el uso de protocolos como **NTLMv1**, **MS-CHAPv2**, Digest y **CredSSP**.
+
+#### Configuración Práctica de Credential Guard
+
+La configuración se realiza a través del **Editor de administración de directivas de grupo (Group Policy Management Editor)**. Los pasos son:
+
+1.  En la GPO, navegar a **Computer Configuration** -\> **Policies** -\> **Administrative Templates** -\> **System** -\> **Device Guard**.
+2.  Habilitar la opción **Turn On Virtualization Based Security**. En sus opciones, se pueden proteger varios parámetros del arranque con el **bloqueo UEFI** (UEFI lock). Si se combina con BitLocker para el cifrado de arranque, se dificulta aún más el acceso malicioso.
+3.  Configurar la opción **Credential Guard Configuration** y seleccionar **Enabled with UEFI lock** para impedir su desactivación remota.
+
+-----
+
+### Remote Credential Guard
+
+**Remote Credential Guard** protege las credenciales durante una conexión de escritorio remoto. Al activarlo, las credenciales del usuario permanecen en el equipo cliente y no se exponen al host remoto. En cambio, la solicitud de autenticación Kerberos se redirige al host de origen (el cliente) para la validación, lo que permite un inicio de sesión único y seguro.
+
+#### Requerimientos para Remote Credential Guard
+
+  * El entorno debe pertenecer al mismo dominio de Active Directory o a uno con una relación de confianza.
+  * Se requiere autenticación **Kerberos**.
+  * Los sistemas operativos compatibles son **Windows 10, versión 1607** o **Windows Server 2016**.
+
+#### Métodos de Configuración de Remote Credential Guard
+
+**Remote Credential Guard** se puede configurar de varias maneras:
+
+  * **Registro de Windows**: Se puede habilitar en la ruta `HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa` creando o modificando un valor `DWORD` llamado `DisableRestrictedAdmin` con un valor de `0`.
+  * **Línea de Comandos**: Utilizando el comando `reg add`:
+    ```bash
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableRestrictedAdmin /d 0 /t REG_DWORD
+    ```
+      * `reg add`: Comando para añadir una clave o valor al registro.
+      * `"HKLM\SYSTEM\CurrentControlSet\Control\Lsa"`: La ruta de la clave del registro.
+      * `/v DisableRestrictedAdmin`: El nombre del valor a agregar.
+      * `/d 0`: El valor de los datos.
+      * `/t REG_DWORD`: El tipo de datos de la entrada.
+  * **Políticas de Grupo (GPO)**: Se configura en `Computer Configuration/Administrative Templates/System/Credentials Delegation`. En la opción `Restrict delegation of credentials to remote servers`, se puede habilitar la política y elegir el modo de restricción, como `Require Remote Credential Guard` o `Require Restricted Admin`.
+  * **Parámetro de Conexión de Escritorio Remoto**: Al iniciar una conexión con `mstsc.exe`, se pueden usar los parámetros `/remoteGuard` o `/RestrictedAdmin`.
+
+-----
+
+## Windows Defender Application Control
+
+**Windows Defender Application Control (WDAC)** es una tecnología de protección que utiliza la **seguridad basada en virtualización (VBS)** para aislar el servicio **Hypervisor Code Integrity (HVCI)**. Esto permite que WDAC proteja los procesos y los controladores en el modo kernel de exploits, vulnerabilidades y ataques de **zero-day**.
+
+WDAC funciona creando una "lista blanca" de los elementos que se pueden ejecutar en el sistema, impidiendo la ejecución de cualquier código no firmado o no incluido en dicha lista. En el modo kernel, WDAC garantiza que los controladores estén firmados por una entidad de confianza **WHQL** o que pertenezcan a una lista de controladores seguros definidos por la política.
+
+Esta tecnología también previene la carga dinámica de código y los intentos de modificar código en la memoria. Adicionalmente, WDAC proporciona protección en el modo de usuario (**UMCI user-mode protection**) mediante políticas de integridad de código que definen qué elementos están autorizados a ejecutar código en cada servidor. Aunque es una de las tecnologías más restrictivas, también es una de las más seguras para prevenir la ejecución de malware, incluso de ataques **zero-day**.
+
+#### Configuración de Windows Defender Application Control
+
+Para configurar WDAC a través de GPO, se debe acceder a **Device Guard** y seleccionar `Deploy Windows Defender Application Control`. Es necesario habilitar la opción y especificar la ruta del archivo de política de integridad de código (`Code Integrity Policy file path`) que contiene la lista de programas seguros permitidos.
+
+-----
+
+## Delegación de Credenciales
+
+La **delegación de credenciales** es el proceso mediante el cual un servicio puede utilizar la identidad de un usuario para acceder a otro servicio en su nombre. Es uno de los aspectos más importantes a configurar durante el proceso de fortificación de un sistema operativo o una infraestructura. Una gestión adecuada de la delegación de credenciales es crucial para evitar la suplantación de identidad y los ataques de movimiento lateral. La consola de administración de GPO ofrece diversas opciones de configuración para la delegación de credenciales que deben ser revisadas cuidadosamente.
+
+-----
+
+## Demo Práctica y Verificación en una Máquina Virtual
+
+En un servidor Windows, es posible verificar el estado de las tecnologías de virtualización y sus protecciones utilizando el comando `msinfo32`. Al abrir la consola de `msinfo32`, se puede inspeccionar la información del sistema para ver el estado de tecnologías como la protección DMA del kernel, VBS (Virtualization-based security), Secure Boot y Credential Guard.
+
+En una máquina virtual, incluso si las políticas de grupo están configuradas para habilitar estas tecnologías, es posible que no se estén ejecutando. Por ejemplo, la seguridad basada en virtualización (VBS) puede aparecer como `Enabled but not running`. Esto se debe a que el hipervisor de la VM (por ejemplo, VirtualBox) no expone los requisitos de hardware necesarios para que estas tecnologías se activen. Para que funcionen en un entorno virtualizado, se requiere la **virtualización anidada**.
+
+
+---
+
+
+Documentos de Referencia: "5-32 Cuentas de Servicio.pdf", "FSW Clase 32 – Cuentas de Servicio Administradas.pdf"
+
+# Informe Detallado sobre la Administración de las Cuentas de Servicio
+
+## Introducción a las Cuentas de Servicio Administradas (Group Managed Service Accounts)
+
+En entornos empresariales, es común la necesidad de utilizar identidades asociadas al funcionamiento de un rol, un servicio o una aplicación que se ejecutan 24/7. Tradicionalmente, los administradores a menudo crean cuentas de usuario con contraseñas que nunca caducan para evitar interrupciones en el servicio, una práctica que introduce un riesgo de seguridad significativo. Una cuenta de servicio con una contraseña que no expira puede ser aprovechada por malware para obtener acceso indefinido a los recursos del sistema y operar de forma inadvertida.
+
+Para solucionar este desafío, Microsoft propone el uso de las **Cuentas de Servicio Administradas** (Group Managed Service Accounts o gMSA). La principal ventaja de estas identidades es que Windows se encarga del mantenimiento y la actualización de las propiedades de la cuenta, incluyendo la renovación periódica y automática de la contraseña. De esta manera, el controlador de dominio genera una contraseña compleja y la renueva a intervalos regulares, lo que garantiza una administración segura y automatizada para las aplicaciones y servicios. Esto convierte a las gMSA en una excelente opción para mantener la gestión de las cuentas de servicio de forma segura a lo largo del tiempo.
+
+-----
+
+## Requisitos y Pasos para Desplegar las Cuentas de Servicio Administradas
+
+Para poder utilizar las Cuentas de Servicio Administradas, se deben cumplir ciertos requisitos previos en el entorno de Active Directory. Estos son:
+
+  * El esquema del Directorio Activo en el bosque de dominio debe estar actualizado, al menos a la versión de **Windows Server 2012**.
+  * El valor del atributo `CN=Schema,CN=Configuration,DC=[Dominio],DC=Com` debe ser `52`.
+  * Debe crearse un grupo de seguridad para la nueva cuenta gMSA aprovisionada.
+  * Si la clave raíz (root key) de primer maestro del Directorio Activo no está implementada o creada en el dominio, debe crearse.
+
+El resultado de la creación de la clave raíz se puede verificar en el registro del servicio **KdsSvc** buscando el **ID de evento 4004**.
+
+### Paso a Paso y Comandos de PowerShell para la Administración de gMSA
+
+El proceso para trabajar con estas cuentas de servicio administradas se realiza a través de una serie de comandos de **Windows PowerShell**. A continuación se detallan los pasos y comandos utilizados en la demo:
+
+#### 1\. Creación de la Clave Raíz (Root Key)
+
+El primer paso es crear la clave raíz. Esto se hace con el comando `Add-KdsRootKey`.
+
+```powershell
+Add-KdsRootKey -EffectiveTime ((get-date).addhours(-10))
+```
+
+  * **Comando**: `Add-KdsRootKey`
+  * **Parámetro**: `-EffectiveTime`
+  * **Valor**: `((get-date).addhours(-10))`
+  * **Acción**: Este comando crea la clave raíz necesaria para que las gMSA funcionen. La hora efectiva se establece 10 horas antes de la hora actual. Tras su ejecución, se muestra un identificador asociado a la clave raíz creada.
+
+#### 2\. Creación y Adición de las Cuentas de Servicio
+
+Una vez creada la clave raíz, se pueden crear las cuentas de servicio y asociarlas al equipo que las utilizará. En la demo, se crean dos cuentas de servicio: `DataShared` y `Webservice`.
+
+**Para la cuenta `DataShared`:**
+
+```powershell
+New-ADServiceAccount -Name DataShared -DNSHostName DC01 -PrincipalsAllowedToRetrieveManagedPassword DC01$
+```
+
+  * **Comando**: `New-ADServiceAccount`
+  * **Parámetros**:
+      * `-Name`: El nombre de la cuenta de servicio, en este caso `DataShared`.
+      * `-DNSHostName`: El nombre de host del controlador de dominio, `DC01` en este ejemplo.
+      * `-PrincipalsAllowedToRetrieveManagedPassword`: Define qué principal puede recuperar la contraseña administrada. En este caso, el equipo `DC01`.
+
+<!-- end list -->
+
+```powershell
+Add-ADComputerServiceAccount -identity DC01 -ServiceAccount DataShared
+```
+
+  * **Comando**: `Add-ADComputerServiceAccount`
+  * **Parámetros**:
+      * `-identity`: El equipo al que se va a añadir la cuenta de servicio.
+      * `-ServiceAccount`: El nombre de la cuenta de servicio que se va a añadir.
+  * **Acción**: Se crea una nueva cuenta de servicio y se añade al equipo especificado.
+
+**Para la cuenta `Webservice`:**
+
+```powershell
+New-ADServiceAccount -Name Webservice -DNSHostName DC01 -PrincipalsAllowedToRetrieveManagedPassword DC01$
+```
+
+```powershell
+Add-ADComputerServiceAccount -identity DC01 -ServiceAccount Webservice
+```
+
+#### 3\. Verificación de las Cuentas Creadas
+
+Se puede verificar que las cuentas de servicio se han creado correctamente con el siguiente comando:
+
+```powershell
+Get-ADServiceAccount -Filter *
+```
+
+  * **Comando**: `Get-ADServiceAccount`
+  * **Parámetro**: `-Filter *`
+  * **Acción**: Muestra todas las cuentas de servicio creadas en el dominio.
+
+#### 4\. Instalación de las Cuentas de Servicio
+
+Una vez creadas, las cuentas deben instalarse para que puedan ser utilizadas en los servidores correspondientes.
+
+```powershell
+Install-ADServiceAccount -Identity DataShared
+```
+
+  * **Comando**: `Install-ADServiceAccount`
+  * **Parámetro**: `-Identity`
+  * **Valor**: El nombre de la cuenta de servicio, por ejemplo, `DataShared` o `Webservice`.
+  * **Acción**: Instala la cuenta de servicio especificada en el servidor donde se ejecuta el comando.
+
+-----
+
+## Demo Práctica: Configuración y Asociación de Cuentas de Servicio
+
+La demostración práctica ilustra cómo configurar y asociar las cuentas de servicio a diferentes servicios en una máquina virtual.
+
+### 1\. Asociación a un Servicio Local (Data Sharing Service)
+
+1.  Se accede a la consola de **Servicios** a través de **Server Manager** -\> **Tools** -\> **Services**.
+2.  Se localiza el servicio deseado, por ejemplo, `Data Sharing Service`, se hace clic derecho y se selecciona `Properties`.
+3.  En la pestaña `Log On`, se selecciona la opción `This account` y se introduce el nombre de la cuenta de servicio, por ejemplo, `seguridadjabali\DataShared$`. Es crucial que el nombre de la cuenta termine con el símbolo de dólar `$`.
+4.  Se eliminan los campos de contraseña, ya que el controlador de dominio se encargará de su gestión y renovación.
+5.  Se da clic en `OK` para asociar la cuenta de servicio al servicio.
+
+### 2\. Asociación a un Pool de Aplicaciones de IIS
+
+1.  Desde **Server Manager**, se accede a **Tools** -\> **Internet Information Services (IIS) Manager**.
+2.  En la consola de IIS, se expande el nombre del servidor, se selecciona `Application Pools` y se elige el pool por defecto, por ejemplo, `DefaultAppPool`.
+3.  En el panel de acciones de la derecha, se hace clic en `Advanced Settings`.
+4.  Dentro de la sección `Process Model`, se hace clic en `Identity` y luego en los tres puntos (...).
+5.  En el cuadro de diálogo `Application Pool Identity`, se selecciona `Custom account` y luego `Set...`.
+6.  En el cuadro de diálogo `Set Credentials`, se introduce la cuenta de servicio, por ejemplo, `seguridadjabali\Webservice$`. Se da clic en `OK` tres veces.
+7.  Se detiene el servicio y luego se inicia nuevamente desde el panel de acciones (`Stop` y `Start`) para que la nueva identidad de la cuenta de servicio (`Webservice`) se aplique al pool de aplicaciones de IIS.
+
+## Consideraciones Adicionales y Fortificación
+
+Para un funcionamiento correcto, dependiendo del rol o aplicación, puede ser necesario realizar **configuraciones adicionales** para las cuentas de servicio. Por ejemplo, en el caso de servicios de autenticación como **AD FS (Active Directory Federation Service)**, es posible que las cuentas de servicio deban ser añadidas a grupos de administración local o a otros grupos específicos que les permitan funcionar como servicio. Esto se puede lograr a través de la configuración de objetos de directiva de grupo (GPOs). Si no se realizan estas configuraciones, es posible que el servicio falle al reiniciarse, generando un error que indicará la necesidad de incluir la cuenta en los grupos adecuados.
+
+La delegación del mantenimiento y la renovación de credenciales a los controladores de dominio es una tarea periódica y automatizada. Esto hace que las Cuentas de Servicio Administradas sean una opción segura para la gestión a largo plazo.
+
+
+---
+
+Documentos de Referencia: "FSW Clase 33 – Controlador de Dominio de Solo Lectura.pdf"
+
+# Informe Detallado sobre el Controlador de Dominio de Solo Lectura (RODC)
+
+## 1. Concepto y Propósito del RODC
+
+Un **Controlador de Dominio de Solo Lectura** (RODC, por sus siglas en inglés, Read Only Domain Controller) es un tipo de controlador de dominio diseñado para ser implementado en ubicaciones como sucursales u oficinas remotas donde, por razones de seguridad, no se puede colocar un controlador de dominio con permisos para modificar el esquema de Active Directory. El propósito principal de un RODC es permitir a los usuarios de la sucursal resolver las peticiones de autenticación y autorización de forma local, sin comprometer la seguridad de la base de datos de Active Directory.
+
+A diferencia de un controlador de dominio estándar, un RODC puede responder a las solicitudes de autenticación y autorización, pero no puede realizar ninguna modificación en los elementos del Directorio Activo. Esto significa que las credenciales no tienen que salir de la sucursal para ser validadas, mejorando la eficiencia y reduciendo el tráfico de red.
+
+Una de las características de seguridad más importantes del RODC es que permite controlar qué credenciales de usuario se pueden almacenar en caché en el dispositivo. Esto asegura que, en caso de robo o acceso no autorizado al equipo, no se encuentren las credenciales de usuarios con altos privilegios del dominio, como los administradores. De este modo, el RODC permite tener un servidor que atiende peticiones de Active Directory de forma local sin comprometer un elemento tan crítico para la organización como lo es la seguridad del Directorio Activo.
+
+***
+
+## 2. Demostración de la Configuración de un RODC
+
+La configuración de un RODC es un proceso que se puede dividir en varios pasos, comenzando por la preparación del entorno y finalizando con la instalación y verificación.
+
+### 2.1. Creación de un Nuevo Sitio en Active Directory
+
+El primer paso para la implementación de un RODC en una sucursal es crear un sitio dedicado para esa ubicación en la consola de **Active Directory Sites and Services**.
+
+1.  Abrir la herramienta **Active Directory Sites and Services** desde el menú **Tools** en **Server Manager**.
+2.  Dentro de la consola, navegar a la carpeta `Sites`.
+3.  Hacer clic derecho en la carpeta `Sites` y seleccionar `New Site`.
+4.  Asignar un nombre al nuevo sitio, por ejemplo, `Boston`.
+
+Para una configuración completa, cada sitio debería estar asociado a una subred específica, lo que permite que los controladores de dominio atiendan las peticiones de forma local. Sin embargo, para los fines de esta demostración, la creación del sitio es suficiente.
+
+### 2.2. Pre-creación de la Cuenta de Equipo del RODC
+
+A continuación, se pre-crea la cuenta de equipo para el RODC en el controlador de dominio principal. Esto se realiza en el **Active Directory Administrative Center**.
+
+1.  Abrir la herramienta **Active Directory Administrative Center** desde el menú **Tools** en **Server Manager**.
+2.  Navegar a la unidad organizativa **Domain Controllers**.
+3.  En el panel de tareas (Tasks), en la sección `Domain Controllers`, hacer clic en `Pre-create a Read-only domain controller`.
+4.  Se abrirá un asistente. Hacer clic en `Next`.
+5.  Especificar el nombre del equipo que se unirá como RODC, por ejemplo, `SRV007`. Este nombre debe coincidir exactamente con el del servidor de destino.
+6.  Seleccionar el sitio creado previamente, por ejemplo, `Boston`.
+7.  Designar un grupo o usuario para la delegación de la instalación y administración del RODC. Para el ejemplo, se selecciona un usuario pre-creado.
+8.  Hacer clic en `Finish` para pre-crear la cuenta del RODC.
+
+Después de estos pasos, la cuenta de controlador de dominio de solo lectura aparecerá en la unidad organizativa **Domain Controllers** del **Active Directory Administrative Center**.
+
+### 2.3. Instalación y Promoción del Servidor a RODC
+
+El siguiente paso se realiza en el servidor que se convertirá en RODC (SRV007).
+
+1.  En la máquina `SRV007`, que inicialmente está en un grupo de trabajo, ir a **Server Manager** y hacer clic en `Manage` -> `Add Roles and Features`.
+2.  En el asistente, navegar hasta `Server Roles` y marcar la casilla **Active Directory Domain Services**.
+3.  Añadir las características requeridas y continuar con la instalación de los roles.
+4.  Una vez finalizada la instalación de los roles, hacer clic en la notificación en la parte superior derecha de **Server Manager** y seleccionar `Promote this server to a domain controller`.
+5.  Se abrirá el asistente de configuración. Seleccionar la opción `Add a domain controller to an existing domain`.
+6.  Proporcionar el nombre del dominio (`Hackers.Academy`) y las credenciales de un usuario del dominio con privilegios para realizar la promoción.
+7.  En la pantalla `Domain Controller Options`, el asistente detectará automáticamente que el servidor es un RODC (Read only domain controller) debido a la cuenta pre-creada. Se puede ver que las opciones de **DNS Server** y **Global Catalog** están seleccionadas por defecto.
+8.  Introducir una contraseña para el **Modo de Restauración de Servicios de Directorio (DSRM)**.
+9.  Completar el resto del asistente y hacer clic en `Install` para comenzar la promoción. El servidor se reiniciará automáticamente al finalizar.
+
+Al reiniciar, el servidor ahora será parte del dominio `Hackers.Academy` y funcionará como un RODC.
+
+### 2.4. Configuración de la Política de Replicación de Contraseñas (Password Replication Policy)
+
+Una vez que el RODC está en funcionamiento, se puede configurar qué credenciales se pueden almacenar en caché. Esto se hace en las propiedades del RODC en el **Active Directory Administrative Center**.
+
+1.  En el controlador de dominio principal, abrir el **Active Directory Administrative Center**.
+2.  Navegar a **Domain Controllers** y seleccionar el RODC (`SRV007`).
+3.  Hacer clic derecho en el RODC y seleccionar `Properties`.
+4.  En la ventana de propiedades, ir a la pestaña `Extensions`.
+5.  Seleccionar la pestaña `Password Replication Policy` y hacer clic en `Add` para añadir grupos con permisos.
+6.  En la ventana para agregar grupos, se puede elegir si el grupo tendrá permisos de `Allow` (Permitir) o `Deny` (Denegar) para la replicación de contraseñas.
+7.  Por defecto, en la pestaña `Password Replication Policy`, ya existen grupos que tienen explícitamente denegada la replicación de contraseñas, como los **Domain Admins**, **Enterprise Admins** y **Schema Admins**. Esto protege por defecto las credenciales de los usuarios más privilegiados del dominio.
+8.  Se puede verificar que un usuario como **`Administrator`** tiene la replicación de contraseña denegada (`Deny Implicit`). En cambio, un usuario estándar, si se añade al grupo permitido (por ejemplo, `Boston RODC`), tendrá la replicación permitida (`Allow`).
+
+Esto demuestra cómo el RODC proporciona un control granular sobre el almacenamiento en caché de credenciales, fortaleciendo la seguridad del Directorio Activo.
+
+***
+
+## 3. Conclusiones y Conceptos Clave
+
+El despliegue de un **Controlador de Dominio de Solo Lectura (RODC)** es una estrategia de seguridad efectiva para infraestructuras con sucursales o entornos distribuidos.
+
+Los conceptos clave aprendidos son:
+* **Protección del Directorio Activo**: Un RODC permite resolver peticiones de autenticación y autorización localmente sin permitir modificaciones en la base de datos de Active Directory, lo que lo hace ideal para entornos con menor seguridad física.
+* **Control de Credenciales**: Los RODC permiten un control preciso sobre qué credenciales de usuario se almacenan en caché. Por defecto, los grupos con altos privilegios, como los administradores de dominio, tienen denegada la replicación de contraseñas, lo que minimiza el riesgo en caso de robo o intrusión del servidor.
+* **Delegación de la Administración**: El proceso de pre-crear la cuenta del RODC y delegar la instalación a un usuario o grupo específicos permite una administración segura y controlada del proceso de despliegue.
+* **Configuración Granular**: La **Política de Replicación de Contraseñas** (`Password Replication Policy`) en las propiedades del RODC ofrece la capacidad de definir explícitamente los grupos y usuarios a los que se permite o se deniega el almacenamiento en caché de credenciales, adaptando la seguridad a las necesidades de la organización.
+
+En resumen, el RODC es una excelente opción para desplegar controladores de dominio de forma segura en ubicaciones donde la administración o la seguridad física podrían estar en riesgo, sin comprometer la integridad y confidencialidad del Directorio Activo principal.
+
+
+---
+
+Documentos de Referencia: "FSW Clase 34 – Fortificación de Windows Server.pdf"
+
+# Informe Técnico: Hardening de Windows Server
+
+## 1\. Resumen Ejecutivo
+
+El siguiente informe técnico detalla los conceptos y procedimientos para la fortificación de servidores Windows, un proceso conocido como **Hardening**. Se exploran tres tecnologías principales: **Privileged Access Management (PAM)**, **Just Enough Administration (JEA)** y la combinación de **Microsoft Passport y Windows Hello**. Se explica cómo estas herramientas ayudan a mitigar riesgos de seguridad al limitar los privilegios de los usuarios, implementar la pertenencia temporal a grupos y utilizar métodos de autenticación más seguros. El informe profundiza en la configuración de estas tecnologías, desde la estructura de bosques de Active Directory hasta la configuración de políticas de grupo, destacando la importancia de cada paso para fortalecer la infraestructura de Microsoft.
+
+## 2\. Conceptos Fundamentales
+
+### **Hardening de Windows Server**
+
+El hardening es un proceso de fortificación de servidores Windows que busca reforzar la seguridad de la infraestructura general de Microsoft. Se aplican configuraciones y tecnologías a la infraestructura en su conjunto, y en etapas posteriores se pueden fortificar servicios específicos como DNS o servidores web.
+
+### **Privileged Access Management (PAM)**
+
+PAM es una tecnología que, en conjunto con **Microsoft Identity Manager (MIM)**, separa las cuentas sensibles en un bosque independiente conocido como **Bosque Bastión (Bastion Forest)**. Este enfoque dificulta los ataques "pass-the-hash" y "pass-the-ticket".
+
+  * **Funcionamiento:** PAM se basa en dos entornos separados con una relación de confianza unidireccional. Las identidades con privilegios, como los administradores de dominio, se almacenan en el Bosque Bastión. Cuando un usuario necesita realizar una tarea que requiere privilegios, se emite una solicitud que debe ser aprobada para conceder un permiso temporal para usar esa cuenta desde el Bosque Bastión.
+  * **Proceso de Autorización:** El usuario recibe un ticket de autorización por un tiempo limitado en lugar de las credenciales reales del grupo privilegiado. Una vez que el tiempo expira, el token caduca, y el usuario vuelve a ser un usuario estándar.
+
+### **Group Member Expiration**
+
+Esta característica permite automatizar la pertenencia temporal a un grupo, la cual está deshabilitada por defecto y requiere un nivel funcional de Windows Server 2016. El tiempo de pertenencia se refleja como un atributo **time-to-live (TTL)** que se propaga a la emisión de tickets TGT de Kerberos. Esto obliga a renovar el ticket TGT cuando la pertenencia al grupo expira, momento en el que se emite un nuevo ticket TGT sin los privilegios de administrador.
+
+### **Just Enough Administration (JEA)**
+
+JEA es una tecnología que se complementa con el principio "Just-in-Time" de PAM. Define un conjunto de comandos de Windows PowerShell específicos para actividades privilegiadas. Los administradores autorizan o habilitan los privilegios necesarios justo antes de que un usuario realice una tarea, y estos privilegios se otorgan por un tiempo determinado.
+
+  * **Características:** JEA habilita la administración delegada con Windows PowerShell. Forma parte del paquete **Windows Management Framework 5.0**, compatible desde Server 2008 R2, y proporciona un control de acceso basado en roles **(RBAC)**.
+
+### **Microsoft Passport y Windows Hello**
+
+Microsoft Passport, en combinación con Windows Hello, utiliza un sistema de claves asimétricas para la autenticación. La clave pública se almacena en el controlador de dominio o en otro proveedor de identidad, mientras que la clave privada se aloja en un chip criptográfico TPM en el dispositivo del usuario.
+
+  * **Proceso de Autenticación:** El usuario prueba su identidad con Windows Hello (o un PIN) para usar la clave privada, completando así la autenticación. El dispositivo actúa como un segundo factor de autenticación. Este método evita el uso de contraseñas, haciendo más complejos los ataques de robo de credenciales.
+  * **Requisitos:** Microsoft Passport funciona con cuentas de Microsoft, AD DS o Azure AD en dispositivos con Windows 10 Professional o Enterprise. Para las organizaciones que utilizan Windows Server 2012 R2, también se necesita una suscripción a Microsoft Azure.
+
+## 3\. Procedimientos Prácticos
+
+### **Habilitación y configuración de Group Member Expiration**
+
+La característica de pertenencia temporal a un grupo se gestiona a través de Windows PowerShell.
+
+  * **Paso 1: Habilitar la característica.** Para habilitar la función de acceso con privilegios en el bosque, se utiliza el siguiente comando.
+    ```
+    Enable-ADOptionalFeature -Identity 'Privileged Access Management Feature' -Target (Get-ADForest) -Scope ForestOrConfigurationSet
+    ```
+  * **Paso 2: Añadir un miembro con pertenencia temporal.** Para agregar un usuario al grupo de administradores de dominio por un período específico (por ejemplo, 13 días), se usa el siguiente comando.
+    ```
+    Add-ADGroupMember -Identity 'Domain Admins' -Members 'InfoSecSvcAcct' -MemberTimeToLive (New-TimeSpan -Days 13)
+    ```
+
+### **Configuración de Just Enough Administration (JEA)**
+
+Para configurar JEA, se debe crear un archivo de configuración de PowerShell.
+
+  * **Paso 1: Crear el archivo de configuración.** Se usa el cmdlet `New-PSSessionConfigurationFile` para crear un archivo con la extensión ".pssc".
+  * **Paso 2: Consultar la documentación oficial.** Se hace referencia a la documentación de Microsoft para obtener información detallada sobre la configuración de la infraestructura de JEA y la administración con comandos de Windows PowerShell.
+
+### **Configuración de Microsoft Passport y Windows Hello**
+
+Para habilitar estas tecnologías, es necesario realizar una serie de pasos que incluyen la configuración de la infraestructura de clave pública (PKI) y la implementación de políticas de grupo.
+
+  * **Pasos para la implementación:**
+
+    1.  Implementar certificados de usuario específicos para Microsoft Passport.
+    2.  Instalar **Microsoft System Center Configuration Manager (SCCM)**.
+    3.  Habilitar una infraestructura de clave pública (PKI) para los certificados. Esta infraestructura puede ser montada con servidores del propio Active Directory que emitan certificados digitales válidos.
+    4.  Configurar **Group Policy Objects (GPO)** para los equipos que utilizarán esta tecnología.
+
+  * **Procedimiento de configuración de GPO:**
+
+    1.  Abrir el **Server Manager** y navegar a **Tools**.
+    2.  Seleccionar **Group Policy Management**.
+    3.  Editar la **Default Domain Policy**, como se muestra en la captura de pantalla.
+    4.  Dentro de la **Default Domain Policy**, navegar a la ruta: **Computer Configuration** \> **Policies** \> **Administrative Templates** \> **Windows Components**.
+    5.  En la sección de **Windows Components**, buscar y seleccionar la opción de **Windows Hello for Business**.
+    6.  En esta sección se encuentran diversas configuraciones para los procesos de autenticación, incluyendo la emulación de tarjetas inteligentes, la recuperación de PIN, el uso de hardware de seguridad, biometría y bloqueo dinámico, como se aprecia en la captura de pantalla.
+
+## 4\. Conclusiones y Puntos Clave
+
+### **Importancia y Beneficios de Seguridad**
+
+La implementación de medidas de hardening, como PAM y JEA, es fundamental para reducir la exposición de credenciales en una organización. Al separar las cuentas privilegiadas en un Bosque Bastión y limitar la duración de los privilegios, se dificulta enormemente que un atacante capture una identidad con altos privilegios. De la misma manera, la adopción de Microsoft Passport y Windows Hello elimina la dependencia de contraseñas, lo que neutraliza una de las vías de ataque más comunes: el robo de credenciales. Estas tecnologías proporcionan una seguridad mucho más robusta y moderna, mejorando la defensa contra ataques de ingeniería social y malware.
+
+### **Puntos de Aprendizaje Clave**
+
+  * **Principio de Privilegios Mínimos:** La pertenencia temporal a grupos y JEA son aplicaciones directas del principio de "Just-in-Time" y "Just Enough Administration", que restringen los privilegios a lo estrictamente necesario y por un tiempo limitado.
+  * **Separación de Entornos:** La creación de un Bosque Bastión para cuentas privilegiadas es una estrategia de seguridad clave para aislar identidades sensibles y mitigar ataques.
+  * **Autenticación sin Contraseña:** El uso de claves asimétricas, chips criptográficos TPM y autenticación biométrica o PIN (Microsoft Passport y Windows Hello) ofrece un método de autenticación más seguro y difícil de comprometer que las contraseñas tradicionales.
+  * **Uso de GPO:** Las directivas de grupo (GPO) son una herramienta poderosa para administrar de forma centralizada las configuraciones de seguridad en toda la organización, permitiendo la aplicación de políticas específicas a diferentes niveles de la estructura.
+
+### **Relevancia Técnica**
+
+Los procedimientos detallados, como la configuración de GPO para Windows Hello y la habilitación de la pertenencia temporal a grupos con PowerShell, son habilidades críticas para cualquier profesional de seguridad en un entorno de Microsoft. Comprender la estructura de bosques de Active Directory y cómo las relaciones de confianza impactan la seguridad es fundamental para implementar correctamente tecnologías como PAM. El despliegue de una infraestructura de clave pública (PKI) es un proyecto complejo pero altamente beneficioso para la seguridad, ya que habilita una amplia gama de funcionalidades, desde la autenticación de aplicaciones hasta el cifrado de comunicaciones.
+
+
+---
+
 
