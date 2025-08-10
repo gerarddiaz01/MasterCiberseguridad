@@ -1520,4 +1520,415 @@ Los procedimientos detallados, como la configuración de GPO para Windows Hello 
 
 ---
 
+Documentos de Referencia: "FSW Clase 35 – Proteger la ejecución de código.pdf"
 
+# Informe Técnico: Protección de la Ejecución de Código en Windows Server
+
+### 1. Resumen Ejecutivo
+Este informe técnico detalla los mecanismos de seguridad disponibles en Windows Server para controlar la ejecución de software. Aborda específicamente las políticas de restricción de software y el uso de AppLocker para gestionar la ejecución de aplicaciones no autorizadas. Además, se explora el rol de Microsoft Defender como solución antimalware, su administración centralizada a través de GPOs y PowerShell, y las distintas configuraciones que permiten adaptar su comportamiento a las necesidades de una organización. El objetivo principal es proporcionar un entendimiento técnico y práctico de cómo proteger los sistemas contra software malicioso y no autorizado.
+
+### 2. Conceptos Fundamentales
+A continuación se describen los conceptos y herramientas clave para la protección de la ejecución de código en entornos Windows Server.
+
+* **Restricción de Software (Software Restriction Policies):** Se trata de un mecanismo de seguridad en Windows Server que permite evitar el uso de software no autorizado en una organización. Estas políticas definen reglas de ejecución de software basándose en el hash, la ruta, la firma digital o la zona de Internet del archivo. Pueden controlar archivos ejecutables, archivos DLL, scripts e instaladores de Windows. Sin embargo, estas políticas son rígidas, ya que no permiten controlar cada tipo de archivo por separado y solo generan una única colección de reglas, lo que las hace obsoletas en entornos modernos.
+
+* **AppLocker:** Esta es una herramienta más moderna y flexible que las políticas de restricción de software. Permite definir reglas de control de aplicaciones para tipos de archivos específicos, como archivos ejecutables, archivos DLL, scripts, paquetes de aplicaciones e instaladores. A diferencia de las políticas de restricción, AppLocker permite importar y exportar reglas, generar reglas automáticamente a partir de aplicaciones instaladas y definir reglas que se aplican a usuarios o grupos específicos, con la capacidad de configurar excepciones. AppLocker soporta una amplia variedad de extensiones, incluyendo `.exe`, `.com`, `.ps1`, `.bat`, `.cmd`, `.vbs`, `.js`, `.msi`, `.msp`, `.mst`, `.dll`, `.ocx` y `.appx`.
+
+* **Microsoft Defender:** Es la solución antimalware integrada en Windows Server. Puede ser gestionada de manera centralizada a través de WMI, directivas de grupo (GPO) o comandos de Windows PowerShell. En versiones recientes de Windows Server, Microsoft Defender viene instalado por defecto con una consola de administración similar a la de las versiones de cliente (Windows 10/11). Su administración puede incluir la configuración de exclusiones, la programación de escaneos y la definición de políticas de protección en tiempo real y remediación.
+
+### 3. Procedimientos Prácticos
+#### **A. Configuración de Políticas de Restricción de Software**
+Este procedimiento se realiza a través de la consola de administración de políticas de grupo (Group Policy Management).
+1.  **Creación de la GPO:** Se crea un nuevo objeto de política de grupo (GPO) y se vincula a una unidad organizativa específica, por ejemplo, "ProtectedServer". En el ejemplo, la GPO se nombra como `Software Restriction`.
+2.  **Edición de la GPO:** Para configurar las políticas, se debe editar la GPO recién creada. La ruta para acceder a las políticas de restricción es `Computer Configuration / Policies / Windows Settings / Security Settings`.
+3.  **Creación de Reglas:** Para definir nuevas políticas, se hace clic derecho en `Software Restriction Policies` y se selecciona `New Software Restriction Policies`. Esto crea un nuevo conjunto de reglas configurables.
+4.  **Desuso:** A pesar de la posibilidad de configuración, estas directivas se consideran obsoletas y no se recomiendan para entornos modernos.
+#### **B. Configuración de AppLocker**
+AppLocker es la alternativa flexible y recomendada para el control de aplicaciones.
+1.  **Acceso a AppLocker:** Desde la GPO que se está editando, se navega hasta `Application Control Policies` y se selecciona `AppLocker`.
+2.  **Creación de Reglas por Defecto:** Antes de crear reglas de denegación (`Deny`), es una práctica recomendada crear reglas por defecto para asegurar el funcionamiento de componentes esenciales de Windows y otras aplicaciones. Estas reglas se generan automáticamente al seleccionar `Create Default Rules` dentro de la sección del tipo de archivo deseado (por ejemplo, `Executable Rules`).
+3.  **Creación de una Regla de Denegación:**
+    * **Inicio:** Se selecciona la opción para crear una nueva regla (`Create New Rule`) y se avanza al siguiente paso.
+    * **Selección de Permiso:** Se elige si la regla será de `Allow` (permitir) o `Deny` (denegar). En el caso de controlar software no deseado, se elige `Deny`.
+    * **Asignación de Grupo:** Se puede aplicar la regla a un grupo de seguridad específico (por ejemplo, `Backup Operators`) en lugar de a todos los usuarios (`Everyone`).
+    * **Condiciones:** Se puede definir la condición de la regla basándose en tres criterios principales:
+        * **Hash del Archivo (File Hash):** Permite prohibir la ejecución de un software basándose en su firma digital, sin importar dónde se encuentre. No obstante, los programas maliciosos pueden modificar su hash para evadir esta restricción.
+        * **Ruta (Path):** Prohíbe la ejecución de software instalado en una ruta de archivo específica. Sin embargo, esta restricción se puede eludir si el software se instala en una ruta diferente.
+        * **Editor (Publisher):** Esta es la opción más flexible, ya que se basa en la firma digital de un publicador de software legítimo. Esto es útil para controlar software autorizado que la organización decide no permitir, como Internet Explorer. Se navega hasta el archivo ejecutable (`iexplore.exe` en el ejemplo) y se define la regla para prohibir la ejecución del producto (`Internet Explorer`) del publicador (`O=MICROSOFT CORPORATION...`).
+    * **Excepciones:** Se pueden añadir excepciones a la regla. Por ejemplo, dentro de una regla de denegación para Internet Explorer, se puede añadir una excepción para permitir la ejecución solo de una versión específica (ej., versión 11).
+    * **Creación y Aplicación:** Tras configurar las excepciones, se finaliza la creación de la regla. Las reglas de AppLocker, incluyendo las reglas por defecto y las reglas personalizadas, se muestran en la consola de GPO.
+#### **C. Gestión de Microsoft Defender**
+La gestión de Microsoft Defender se puede realizar a través de PowerShell o GPOs.
+1.  **Instalación y Verificación (versiones anteriores):** En versiones de Windows Server anteriores a la instalación por defecto, el motor antimalware y la interfaz gráfica se podían instalar con comandos de PowerShell. Para verificar su estado, se usaba el comando `SC Query Windefend`.
+2.  **Configuración mediante GPOs:** Al igual que con las políticas de restricción, la gestión de Defender se realiza en el `Group Policy Management Editor`. La ruta específica es `Computer Configuration / Administrative Templates / Windows Components / Microsoft Defender Antivirus`.
+3.  **Opciones de Configuración:** Las GPOs ofrecen una gran cantidad de configuraciones para adaptar Defender a las necesidades de la organización, incluyendo:
+    * **Client Interface**
+    * **Exclusions:** Exclusiones por extensión, ruta, dirección IP o proceso.
+    * **Exploit Guard:** Incluye configuraciones para la reducción de la superficie de ataque (`Attack Surface Reduction`), el acceso controlado a carpetas (`Controlled Folder Access`) y la protección de red (`Network Protection`).
+    * **MpEngine**
+    * **Network Inspection System**
+    * **Quarantine**
+    * **Real-Time Protection**
+    * **Remediation**
+    * **Reporting**
+    * **Scan**
+    * **Security Intelligence Updates**
+    * **Threats**
+4.  **Administración Centralizada:** La capacidad de gestionar estas configuraciones a través de GPOs permite desplegar una política de seguridad antimalware coherente y específica para diferentes partes de la organización, como departamentos o sucursales, asegurando el comportamiento deseado del software de seguridad.
+
+### 4. Conclusiones y Puntos Clave
+* **Importancia y Beneficios de Seguridad:** La implementación de políticas de control de software y el uso de soluciones antimalware como Microsoft Defender son esenciales para minimizar el riesgo de ejecución de software no autorizado o malicioso. Al restringir la ejecución de aplicaciones no deseadas, las organizaciones pueden reducir significativamente su superficie de ataque y proteger sus sistemas contra amenazas como el malware. Estas herramientas permiten un control granular que se adapta a las necesidades específicas de la organización.
+* **Puntos de Aprendizaje Clave:**
+    * Windows Server ofrece varias herramientas para el control de la ejecución de código, como las obsoletas políticas de restricción de software y la más moderna y flexible AppLocker.
+    * AppLocker es superior porque permite una configuración más detallada, como la importación/exportación de reglas, la definición de reglas para grupos de usuarios específicos y la creación de excepciones.
+    * Microsoft Defender es una solución antimalware robusta, administrable de forma centralizada a través de GPOs, lo que permite un control exhaustivo sobre su comportamiento en toda la infraestructura.
+    * La administración centralizada a través de objetos de directiva de grupo es un método clave para desplegar tecnologías de seguridad en entornos empresariales.
+* **Relevancia Técnica:** Entender y saber cómo desplegar estas tecnologías es crucial para los profesionales de la ciberseguridad y la administración de sistemas. La capacidad de configurar con precisión herramientas como AppLocker y Microsoft Defender permite adaptar la seguridad a los requisitos de rendimiento y funcionalidad de diferentes equipos o departamentos, equilibrando la protección con la operatividad del negocio. Los procedimientos detallados, como la creación de reglas por defecto en AppLocker o la configuración de exclusiones en Defender, son prácticas fundamentales para una gestión de seguridad efectiva.
+
+
+---
+
+Documentos de Referencia: "FSW Clase 36 – Windows Server BackUp.pdf"
+
+# Informe Técnico: Copias de Seguridad en Windows Server
+
+## 1. Resumen Ejecutivo
+Este informe técnico se centra en el servicio de copias de seguridad de Windows Server, una herramienta fundamental para la seguridad y continuidad de las organizaciones. Se detallan los conceptos clave, las funcionalidades del servicio y los procedimientos prácticos para su instalación, configuración y uso. El objetivo es proporcionar una guía didáctica y técnica sobre cómo implementar una estrategia de backup robusta para proteger los datos contra incidentes de seguridad, como el ransomware.
+
+---
+
+## 2. Conceptos Fundamentales
+El documento destaca varios conceptos clave que son cruciales para la planificación y ejecución de una estrategia de copias de seguridad efectiva.
+
+* **Windows Server Backup:** Se trata de una característica o servicio del sistema operativo Windows Server que permite realizar copias de seguridad completas del servidor, de volúmenes, carpetas, archivos, el estado del sistema, máquinas virtuales o clústeres de volúmenes compartidos (CSV). Permite programar y automatizar los backups, así como configurar su rendimiento. También permite la recuperación completa o selectiva de datos a su ubicación original o a una diferente.
+
+* **Recovery Point Objective (RPO):** Este concepto define la cantidad máxima de datos que una organización puede permitirse perder en caso de un incidente. Generalmente, se mide en tiempo y determina la frecuencia con la que se deben realizar las copias de seguridad. Por ejemplo, si el RPO es de una hora, los backups deben realizarse al menos cada hora para asegurar que la pérdida de datos no supere ese límite.
+
+* **Recovery Time Objective (RTO):** Se refiere a la cantidad máxima de tiempo que se puede tardar en recuperar los datos perdidos y restaurar el servicio después de un fallo. Un RTO bajo implica la necesidad de tecnologías de alta disponibilidad, como los clústeres de conmutación por error (`failover clustering`), además del servicio de backup.
+
+* **Otros Factores de Planificación:** Para una estrategia de backup completa, también se deben considerar:
+    * **Tiempo de Retención:** El período durante el cual se deben conservar las copias de seguridad, que en algunos casos puede estar definido por requisitos legales.
+    * **Alta Disponibilidad:** Tecnologías que aseguran la continuidad del servicio.
+    * **Clasificación de Datos:** La categorización de los datos según su importancia y confidencialidad. Esto es crucial para la seguridad, ya que los backups de datos confidenciales deben estar tan protegidos como los datos originales para evitar fugas de información y posibles multas.
+
+---
+
+## 3. Procedimientos Prácticos
+
+A continuación, se detallan los pasos para instalar, configurar y utilizar el servicio de Windows Server Backup.
+
+### **Instalación del Servicio de Windows Server Backup**
+
+El servicio no está instalado por defecto y se puede añadir a través de la consola de Server Manager o mediante PowerShell.
+
+1.  **Acceso a la Consola de Server Manager:** Desde la consola principal, vaya a la sección **"Manage"** (Administrar) en la esquina superior derecha y seleccione **"Add Roles and Features"** (Agregar roles y características).
+2.  **Selección de Características:** Siga el asistente hasta la sección **"Features"** (Características). A diferencia de un rol, el servicio de backup se instala como una característica. Desplácese hacia abajo en la lista hasta encontrar **"Windows Server Backup"**.
+3.  **Confirmación e Instalación:** Marque la casilla de **"Windows Server Backup"** y complete el asistente dando clic en **"Next"** (Siguiente) e **"Install"** (Instalar). Este proceso añadirá la característica al sistema operativo.
+4.  **Verificación:** Una vez completada la instalación, el servicio estará disponible en el menú de **"Tools"** (Herramientas) de la consola de Server Manager.
+
+Alternativamente, la instalación se puede realizar utilizando el siguiente comando en PowerShell:
+`Install-WindowsFeature -Name Windows-Server-Backup`.
+Este comando automatiza la instalación del servicio, ahorrando tiempo en entornos de múltiples servidores.
+
+### **Creación de un Disco Duro Virtual para Copias de Seguridad**
+
+Se recomienda utilizar un volumen dedicado para almacenar los backups, ya que realizar un respaldo en el mismo volumen que se está copiando no tiene sentido y algunas operaciones de la herramienta no lo permiten.
+
+1.  **Administración de Discos:** Desde la consola de Server Manager, navegue a **"Tools"** > **"Computer Management"** (Administración de equipos) > **"Disk Management"** (Administrador de discos).
+2.  **Inicializar y Formatear un Disco:** Si ha añadido un nuevo disco virtual, este aparecerá como no inicializado. Utilice el asistente para inicializarlo y crear un **"New Simple Volume"** (Nuevo volumen simple). Siga los pasos para asignarle una letra y formatearlo.
+3.  **Confirmación:** Verifique que el nuevo volumen aparece en la lista de discos disponibles, listo para ser utilizado como destino de las copias de seguridad.
+
+### **Realización de un Backup Programado y Restauración Selectiva**
+
+Este procedimiento detalla cómo configurar un backup de una carpeta específica y cómo restaurar un documento de esa copia de seguridad.
+
+#### **Configuración de un Backup Programado**
+
+1.  **Acceso al Servicio:** Abra el servicio **"Windows Server Backup"** desde el menú **"Tools"** de Server Manager.
+2.  **Inicio del Asistente:** En el panel derecho de la consola de **"Local Backup"** (Copia de seguridad local), seleccione **"Backup Schedule"** (Programación de copias de seguridad).
+3.  **Tipo de Configuración:** Elija la opción **"Custom"** (Personalizado) en lugar de **"Full Server"** (Servidor completo) para seleccionar elementos específicos.
+4.  **Selección de Elementos:** Haga clic en **"Add Items"** (Agregar elementos) para seleccionar la carpeta o archivo que desea respaldar. Por ejemplo, se muestra cómo seleccionar una carpeta llamada **"Data"**.
+5.  **Exclusiones (Opcional):** Si es necesario, puede acceder a **"Advanced Settings"** (Configuración avanzada) para añadir exclusiones de archivos o carpetas dentro del volumen seleccionado, lo que puede mejorar la eficiencia del backup.
+6.  **Programación de la Frecuencia:** Configure la frecuencia de la copia de seguridad. Puede elegir entre una vez al día o a intervalos más cortos, especificando las horas deseadas para la ejecución del backup.
+7.  **Destino del Backup:** Seleccione la ubicación de destino para la copia de seguridad. La opción recomendada es **"Back up to a hard disk that is dedicated for backups"** (Realizar copias de seguridad en un disco duro dedicado) o a un volumen específico, como el disco virtual que se creó previamente.
+8.  **Finalización:** Revise la configuración y confirme para iniciar el proceso de programación del backup.
+
+#### **Restauración de Datos**
+
+1.  **Acceso a la Restauración:** En la consola de Windows Server Backup, seleccione **"Recover"** (Recuperar).
+2.  **Selección del Origen:** El asistente le preguntará dónde está almacenada la copia de seguridad. Elija la opción correspondiente.
+3.  **Selección del Tipo de Recuperación:** Elija el tipo de elementos a recuperar, como **"Files and folders"** (Archivos y carpetas) o **"Volumes"** (Volúmenes).
+4.  **Selección de Elementos a Restaurar:** Navegue por la estructura del backup y seleccione los archivos o carpetas específicos que desea recuperar.
+5.  **Destino de la Restauración:** Seleccione el destino de la recuperación. Puede ser la ubicación original o una **"Another location"** (otra ubicación) para comparar las versiones o evitar sobrescribir datos accidentalmente.
+6.  **Confirmación:** Revise los detalles de la restauración y confirme para iniciar el proceso. La herramienta indicará el progreso y el resultado final.
+
+---
+
+## 4. Conclusiones y Puntos Clave
+
+El servicio de Windows Server Backup es una herramienta integral y estable que se integra directamente en el sistema operativo, utilizando una tecnología idéntica a la empleada en Azure para operaciones de almacenamiento y máquinas virtuales en caliente, lo que garantiza una gran estabilidad y eficiencia.
+
+### **Importancia y Beneficios de Seguridad**
+
+* **Mitigación de Riesgos:** El servicio de backup es la principal defensa contra amenazas como el **ransomware**, que cifra los datos y exige un rescate. Una política de backup bien implementada permite restaurar los datos sin ceder a las demandas de los atacantes.
+* **Eficiencia en la Recuperación:** La capacidad de realizar recuperaciones selectivas de archivos y carpetas individuales, sin necesidad de restaurar todo un volumen, optimiza el tiempo de recuperación y minimiza el impacto en la operación del negocio.
+* **Flexibilidad en la Restauración:** La opción de restaurar datos a una ubicación diferente de la original proporciona flexibilidad y permite a los administradores comparar versiones de documentos o restaurar datos sin sobrescribir información existente.
+
+### **Puntos de Aprendizaje Clave**
+
+* **Planificación es Fundamental:** Antes de implementar un backup, es crucial definir los objetivos de recuperación (RPO y RTO), el tiempo de retención y la clasificación de los datos.
+* **Verificación Constante:** Es vital realizar pruebas de restauración de manera regular para asegurar que las copias de seguridad funcionan correctamente y que los datos son recuperables. Un backup que no puede ser restaurado no tiene valor.
+* **Conocimiento y Configuración:** Un conocimiento detallado de los componentes de Windows Server y su correcta configuración son esenciales para fortificar un sistema y marcar la diferencia en caso de un incidente de seguridad.
+
+### **Relevancia Técnica**
+
+Los procedimientos detallados en el material son de gran relevancia profesional, ya que las copias de seguridad son un pilar de la gestión de infraestructuras de TI. La capacidad de instalar y configurar esta herramienta de manera eficiente, así como de planificar y ejecutar estrategias de recuperación, es una habilidad indispensable en el ámbito de la ciberseguridad y la administración de sistemas. La tecnología subyacente del servicio de Windows Server Backup, probada en entornos como Azure, demuestra su fiabilidad y robustez para su uso en entornos corporativos.
+
+
+---
+
+
+Documentos de Referencia: "FSW Clase 38 – Windows Server Update Services.pdf"
+
+# Informe Técnico: Windows Server Update Services (WSUS)
+
+---
+
+## 1. Resumen Ejecutivo
+El servicio Windows Server Update Services (WSUS) es un rol fundamental en entornos empresariales para la gestión centralizada de actualizaciones de software de Microsoft. Este informe detalla cómo WSUS permite a los administradores gestionar de manera eficiente el despliegue, la aprobación y la supervisión de las actualizaciones. La implementación de WSUS no solo optimiza el tráfico de red y evita cuellos de botella, sino que también es un pilar básico de la ciberseguridad, ayudando a proteger la infraestructura contra vulnerabilidades conocidas.
+
+---
+
+## 2. Conceptos Fundamentales
+### Windows Server Update Services (WSUS)
+**Windows Server Update Services (WSUS)** es un rol de Windows Server diseñado para administrar y distribuir actualizaciones en una red corporativa. Funciona como un servidor de actualizaciones que centraliza la descarga de parches y los distribuye a los demás equipos de la organización, incluidos otros servidores WSUS, lo que permite crear jerarquías complejas en entornos grandes.
+
+Las principales ventajas y funcionalidades de WSUS incluyen:
+* **Administración de Políticas:** Permite configurar diferentes políticas para la aplicación de actualizaciones y gestionar su distribución.
+* **Control de Aprobación:** Los administradores pueden aprobar o denegar manualmente las actualizaciones antes de que se desplieguen en la red.
+* **Optimización de Red:** En lugar de que cada dispositivo descargue actualizaciones de Internet, el servidor WSUS descarga las actualizaciones una sola vez, reduciendo el tráfico de red, evitando cuellos de botella y disminuyendo el tráfico que debe ser analizado por firewalls.
+* **Supervisión y Reportes:** Permite monitorizar el proceso de despliegue y generar informes para identificar equipos que no han recibido o aplicado correctamente las actualizaciones.
+
+### Requisitos de WSUS
+Para funcionar, el rol de WSUS tiene los siguientes requisitos y características:
+* **Servicios de Información de Internet (IIS):** Utiliza un servicio web para la distribución de actualizaciones.
+* **Microsoft .NET Framework 4.6 o superior:** Un componente de software necesario para ejecutar las aplicaciones de WSUS.
+* **Microsoft Report Viewer Redistributable 2008 o superior:** Esencial para la generación de informes.
+* **Base de Datos:** Requiere una base de datos, que puede ser SQL Server (versiones 2012 con SP1, 2012, 2008 R2 SP2, 2008 R2 SP1) o la base de datos interna de Windows (Windows Internal Database o WID). Por defecto, se utiliza **WID**, que crea un archivo `SUSDB.mdf` en la ruta `%windir%\wid\data` y necesita un mínimo de **40 GB de espacio en disco** para las actualizaciones.
+* **Puertos y Capacidad:** Por defecto, utiliza los puertos **8530 para HTTP** y **8531 para HTTPS**. Un servidor con 4 GB de RAM puede soportar hasta 100,000 clientes, demostrando la eficiencia del servicio.
+
+---
+
+## 3. Procedimientos Prácticos
+### Instalación del Rol de WSUS
+La instalación del rol de WSUS se realiza a través del asistente de Server Manager.
+
+1.  **Iniciar el Asistente:** En Server Manager, vaya a **"Manage"** y seleccione **"Add Roles and Features"**.
+2.  **Selección del Rol:** En el asistente, navegue hasta la sección de **"Server Roles"** y marque la casilla de **"Windows Server Update Services"**. Al hacerlo, se le pedirá que agregue características requeridas; haga clic en **"Add Features"**.
+3.  **Configuración de la Ubicación del Contenido:** El asistente le solicitará la ubicación donde se almacenarán las actualizaciones. Es necesario un disco formateado con NTFS y al menos 6 GB de espacio libre. Se puede especificar una ruta de acceso local o remota.
+4.  **Servicios de Rol:** Mantenga los servicios de rol por defecto para el servidor web y WSUS, y continúe con el asistente.
+5.  **Instalación:** Revise la confirmación y haga clic en **"Install"** para iniciar el proceso de instalación.
+6.  **Tareas Post-Instalación:** Una vez completada la instalación, se deben ejecutar las tareas de post-instalación para finalizar la configuración del servidor.
+
+### Configuración Inicial de WSUS
+Después de la instalación, se utiliza un asistente de configuración para preparar el servidor WSUS.
+
+1.  **Acceso a la Consola:** Desde el menú **"Tools"** de Server Manager, abra la consola **"Windows Server Update Services"**.
+2.  **Asistente de Configuración:** Al iniciar, aparecerá un asistente. Es fundamental verificar que el servidor WSUS puede conectarse a un servidor de actualizaciones "upstream" (como Microsoft Update) y que el firewall está configurado para permitir el acceso a los clientes.
+3.  **Fuente de Actualizaciones:** Elija si el servidor se sincronizará con **"Microsoft Update"** o con otro servidor WSUS.
+4.  **Configuración de Proxy (Opcional):** Si su red requiere un servidor proxy, configure los ajustes necesarios en esta sección.
+5.  **Iniciar Conexión:** Inicie la conexión con el servidor "upstream" para descargar la información de actualizaciones disponibles.
+6.  **Selección de Opciones:** Posteriormente, el asistente permite elegir los idiomas, productos y clasificaciones de actualizaciones que se desean descargar y sincronizar. También se puede configurar un horario para la sincronización automática.
+7.  **Despliegue de GPO:** Para que los equipos cliente descarguen actualizaciones del servidor WSUS local en lugar de Windows Update, se debe configurar una **directiva de grupo (GPO)** que apunte a la dirección del servidor WSUS.
+
+### Gestión y Monitoreo
+La consola de WSUS ofrece un panel de control completo para la administración diaria.
+
+* **Estado de la Sincronización:** La consola muestra el estado de sincronización del servidor, incluyendo la fecha y hora de la última sincronización y el resultado.
+* **Estado de los Equipos:** Se puede ver un resumen del estado de los equipos, incluyendo los que tienen errores, los que necesitan actualizaciones y los que ya están actualizados.
+* **Informes:** La herramienta permite generar una variedad de informes, como el resumen de estado de actualizaciones, el estado detallado de equipos y el resultado de las sincronizaciones.
+* **Grupos de Equipos:** Una de las funcionalidades más útiles es la creación de **grupos de equipos**. Esto permite aplicar actualizaciones de forma selectiva a grupos de prueba antes de desplegarlas progresivamente en el resto de la organización.
+* **Aprobación de Actualizaciones:** Las actualizaciones deben ser aprobadas manualmente antes de su despliegue, aunque existe la opción de aprobar automáticamente ciertas actualizaciones.
+
+---
+
+## 4. Conclusiones y Puntos Clave
+### Importancia y Beneficios de Seguridad
+La gestión de actualizaciones es un pilar fundamental de la ciberseguridad. Muchas amenazas de malware y ataques se basan en **vulnerabilidades conocidas** que ya han sido corregidas mediante actualizaciones. Al mantener los dispositivos actualizados, se reduce significativamente el riesgo de éxito de estos ataques. WSUS proporciona una forma eficiente y segura de lograr esto en un entorno empresarial. Además de la seguridad, los beneficios de WSUS incluyen la optimización del ancho de banda y la capacidad de centralizar el control de las actualizaciones.
+
+### Puntos de Aprendizaje Clave
+* WSUS es una solución eficiente para el despliegue, monitoreo y aplicación de actualizaciones en una red.
+* La implementación de WSUS reduce la carga en la red al descargar las actualizaciones una sola vez.
+* Permite la creación de grupos de equipos para un despliegue progresivo de actualizaciones.
+* La capacidad de generar informes es vital para auditar el estado de seguridad de la red.
+* La configuración del cliente mediante GPO es necesaria para que los equipos se dirijan al servidor WSUS en lugar de a Windows Update.
+
+### Relevancia Técnica
+El uso de WSUS es una práctica estándar en la administración de sistemas para garantizar que la infraestructura de TI esté protegida contra las últimas amenazas. La capacidad de configurar este servicio, gestionar las actualizaciones de manera granular y auditar el estado de los parches en los equipos es una habilidad técnica esencial para cualquier profesional de IT. La consola de administración y los cmdlets de PowerShell brindan la flexibilidad necesaria para adaptarse a cualquier tamaño de organización, desde pequeñas redes hasta jerarquías de servidores masivas. El conocimiento de WSUS es crucial para mantener un entorno seguro y estable.
+
+
+---
+
+Documentos de Referencia: "FSW Clase 39 – Seguridad DHCP.pdf"
+
+# Informe Técnico: Seguridad en el Servicio DHCP
+
+---
+
+## 1. Resumen Ejecutivo
+El servicio DHCP (Dynamic Host Configuration Protocol) es esencial para la asignación automática de direcciones IP en cualquier red. La correcta administración de este servicio es crítica para la seguridad de toda la red, ya que un servicio DHCP comprometido puede facilitar ataques como la interceptación de información. Este informe técnico explora las funcionalidades de seguridad de DHCP en un entorno de Windows Server, incluyendo la autorización en Active Directory, la configuración de clústeres, la protección de nombres DNS, los registros de auditoría y los filtros MAC. Además, se detallan los procedimientos para implementar estas medidas, demostrando cómo fortalecer la red contra posibles amenazas.
+
+---
+
+## 2. Conceptos Fundamentales
+### Funcionamiento del Servicio DHCP
+El servicio DHCP opera escuchando constantemente las solicitudes de dispositivos en la red que requieren una dirección IP. Cualquier dispositivo configurado para la asignación automática de IP enviará una solicitud a la red. El primer servidor DHCP que responda ofrecerá la configuración del adaptador de red del dispositivo.
+
+* **Falta de Seguridad por Defecto:** El protocolo DHCP no incluye mecanismos de seguridad por defecto, como la autenticación mediante certificados digitales. Esto permite que cualquier servidor DHCP no autorizado en la red pueda responder a las solicitudes y realizar una configuración maliciosa en los dispositivos.
+
+### Amenazas en el Servicio DHCP
+Una suplantación de identidad del servicio DHCP podría configurar de manera maliciosa los adaptadores de red de los equipos, lo que podría facilitar ataques de interceptación de información, o el envío de peticiones a servidores maliciosos diseñados para recopilar datos confidenciales, como contraseñas y datos bancarios.
+
+### Clúster de Servidores DHCP
+Desde Windows Server 2016, es posible configurar un **clúster de servidores DHCP** con dos o más servidores.
+* **Alta Disponibilidad:** Un clúster de DHCP evita la pérdida del servicio si uno de los servidores falla, ya que los servidores activos mantienen el conjunto de direcciones disponibles.
+* **Ventajas sobre versiones anteriores:** En versiones anteriores de Windows Server, se utilizaba un método de división de direcciones (`split-scope`) donde cada servidor gestionaba la mitad del pool de direcciones, lo que desperdiciaba recursos y podía provocar denegaciones de servicio si dos dispositivos recibían la misma IP. El clúster supera estos problemas al permitir que múltiples servidores mantengan el mismo pool de direcciones.
+
+---
+
+## 3. Procedimientos Prácticos
+### Instalación y Autorización de DHCP
+Para garantizar la seguridad y el correcto funcionamiento del servicio en un entorno de Active Directory, el servidor DHCP debe ser autorizado.
+
+1.  **Instalación del Rol:** Vaya a **Server Manager** y seleccione **"Add Roles and Features"**. Siga el asistente hasta la sección **"Server Roles"** y seleccione **"DHCP Server"**.
+2.  **Agregar Herramientas:** Confirme la adición de las herramientas de administración requeridas, como **"Remote Server Administration Tools"** y **"DHCP Server Tools"**.
+3.  **Autorización en Active Directory:** Tras la instalación, el servicio DHCP no se iniciará hasta que sea autorizado. Utilice el asistente de post-instalación para autorizar el servidor, lo que requiere credenciales de un usuario con privilegios de dominio.
+4.  **Verificación:** Una vez autorizado, los pools de direcciones se activarán y se podrá gestionar el servicio desde la consola de administración de DHCP.
+
+### Medidas de Seguridad Adicionales
+Una vez instalado y autorizado el servidor DHCP, se pueden configurar varias características de seguridad.
+
+* **Protección de Nombres DNS:** Por defecto, esta característica está deshabilitada. Al habilitarla, el servidor DHCP registrará los registros `A` y `PTR` en el servidor DNS en nombre de los clientes. Esto asegura que los registros DNS tengan prioridad si provienen de un servidor DHCP autorizado.
+* **Registros de Auditoría (DHCP Audit Log):** Es crucial habilitar el servicio de auditoría de DHCP para el análisis de la actividad. Estos registros ayudan a detectar problemas o ataques en la red. En muchos países, la retención de estos registros es obligatoria por ley para justificar la asignación de IP a dispositivos en momentos específicos. Esta configuración se encuentra en las propiedades del servidor, en la pestaña **"Advanced"**.
+* **Filtros MAC:** Los filtros MAC se utilizan para permitir o denegar los servicios DHCP a direcciones MAC específicas. Al configurar una **"Deny List"**, el servidor rechazará las solicitudes de los clientes cuyas direcciones MAC se encuentren en esa lista.
+* **Protección DHCP en Virtualización (DHCP Guard):** En entornos de virtualización con Hyper-V, se puede habilitar **DHCP Guard** para evitar que máquinas virtuales no autorizadas actúen como servidores DHCP maliciosos. Esta función descarta los mensajes de servidores DHCP no autorizados procedentes de máquinas virtuales.
+
+### Creación de un Clúster de DHCP
+1.  **Configurar Failover:** Desde la consola de administración de DHCP, haga clic derecho en el pool (scope) deseado y seleccione **"Configure Failover"**.
+2.  **Selección de Servidor:** Siga el asistente para seleccionar los servidores que participarán en el clúster. Se buscarán servidores DHCP autorizados en el dominio para crear una relación de `failover`.
+3.  **Configuración de Relación:** Configure cómo se repartirá la carga de trabajo entre los servidores y establezca una contraseña compartida para autenticar la comunicación entre ellos. Una vez finalizado, el clúster estará operativo.
+
+---
+
+## 4. Conclusiones y Puntos Clave
+### Importancia y Beneficios de Seguridad
+El servicio DHCP, a pesar de la falta de seguridad inherente en su protocolo, es un pilar fundamental para cualquier red. Una administración adecuada y la configuración de sus características de seguridad aumentan significativamente la protección de la red y de servicios relacionados como DNS. La implementación de medidas como la autorización del servidor, los clústeres de alta disponibilidad y los registros de auditoría permiten detectar intrusiones y prevenir ataques. Además, la protección contra la suplantación de DHCP en entornos virtuales con **DHCP Guard** es crucial para evitar ataques dentro del hipervisor.
+
+### Puntos de Aprendizaje Clave
+* La seguridad en DHCP es un tema crítico que debe ser planificado y gestionado con cuidado.
+* La autorización de servidores DHCP en Active Directory es un paso esencial para prevenir servidores maliciosos.
+* Los clústeres de DHCP mejoran la disponibilidad del servicio y la gestión de la carga de trabajo, reemplazando métodos menos eficientes.
+* Habilitar los registros de auditoría es vital para la detección de problemas y ataques, y en algunos casos es un requisito legal.
+* La configuración de filtros MAC y de la protección de nombres DNS añade capas adicionales de seguridad a la red.
+
+### Relevancia Técnica
+El conocimiento detallado de la seguridad en DHCP es indispensable para los profesionales de IT. Desde la instalación y autorización del servicio hasta la configuración de opciones avanzadas, como la protección de nombres DNS y los clústeres de alta disponibilidad, cada paso es una habilidad técnica valiosa. La capacidad de implementar estas características de seguridad, así como de auditar los registros de actividad, es fundamental para mantener un entorno de red seguro, estable y conforme a las regulaciones. Las herramientas integradas en Windows Server ofrecen un amplio abanico de posibilidades para la gestión de la seguridad en este servicio crítico.
+
+---
+
+Documentos de Referencia: "FSW Clase 40 – Seguridad DNS.pdf"
+
+# Informe Técnico: Seguridad DNS
+
+## 1\. Resumen Ejecutivo
+
+Este informe técnico se centra en la seguridad del servicio DNS, un componente fundamental en la infraestructura de cualquier organización. Se analizan los conceptos básicos del servicio, las consideraciones de seguridad, y las características avanzadas como DNSSEC, las políticas de DNS y el RRL (Response Rate Limiting). El objetivo es proveer una guía exhaustiva sobre cómo administrar y fortificar los servidores DNS para prevenir ataques, detectar intrusiones y mejorar la seguridad general de la red.
+
+## 2\. Conceptos Fundamentales
+
+El servicio de DNS es un protocolo esencial que permite resolver consultas de nombres de dominio, como "https://www.google.com/search?q=google.com" o "wikipedia.org", asociándolas a una dirección de red específica (IPv4 o IPv6). Este servicio es crucial para el funcionamiento de los entornos de red modernos y es indispensable para el Directorio Activo (Active Directory).
+
+A continuación, se detallan los conceptos clave:
+
+  * **Zonas de Búsqueda (Search Zones):** Son agrupaciones de diferentes recursos que corresponden a un nombre de dominio determinado.
+      * **Zonas de Búsqueda Directa:** Funcionan cuando una máquina consulta un nombre de dominio y el servidor DNS responde con una dirección IP.
+      * **Zonas de Búsqueda Inversa (Reverse Lookup Zones):** Proporcionan el nombre de un recurso a partir de una dirección IP.
+  * **Replicación de Zonas:** El protocolo DNS cuenta con un sistema de replicación de zonas que se usa en servidores que no son controladores de dominio o en zonas no integradas en Active Directory. En el caso de zonas integradas en Active Directory, la replicación se realiza a través de su propio protocolo, que incluye procesos de autenticación y cifrado para comunicaciones seguras.
+  * **Opciones de Seguridad de DNS:**
+      * **DNS Cache Locking:** Evita la sobrescritura de registros en la caché del servidor por el valor de su TTL (Time-To-Live) o un porcentaje del mismo. Esto ayuda a prevenir que software malicioso genere entradas persistentes en la caché del servidor que apunten a sitios maliciosos. El bloqueo se configura como un porcentaje, con un valor por defecto del 100%. Se recomienda configurar el bloqueo de caché a un mínimo del 90%.
+      * **DNS Socket Pool:** Es una característica de Windows Server que habilita la aleatorización de puertos de origen para las consultas DNS. Esto dificulta ataques como el DNS spoofing. El tamaño del grupo de sockets es de 2,500 por defecto, y se puede configurar un valor entre 0 y 10,000. Un valor más alto aumenta la protección.
+  * **DNSSEC (Domain Name System Security Extensions):** Permite firmar criptográficamente una zona DNS y todos sus registros, utilizando certificados digitales y una infraestructura de clave pública. Los clientes pueden validar la respuesta del servidor DNS, lo que protege contra la falsificación de registros.
+      * **Trust Anchor:** Es una entidad autorizada que representa una clave pública asociada a una zona específica. En DNS, el Trust Anchor es el registro de recursos DNSKEY o Delegation Signer (DS). Los clientes usan estos registros para construir cadenas de confianza. El Trust Anchor debe configurarse en la zona de cada servidor DNS del dominio para validar las respuestas. Las zonas integradas en Active Directory pueden distribuir el Trust Anchor a los controladores de dominio.
+  * **DNS Policies:** Son directivas en Windows Server que permiten configurar la resolución de servidores con múltiples opciones. Por ejemplo, pueden dirigir una consulta al servidor más cercano geográficamente. También se pueden usar para crear filtros, evitar ataques maliciosos, descartar peticiones mal configuradas y fortificar la resolución de servicios.
+  * **Response Rate Limiting (RRL):** Una característica de Windows Server para proteger contra ataques de amplificación DNS. El RRL limita el número de respuestas similares que el servidor enviará a clientes de la misma subred. Esto defiende al servidor para que no sea utilizado involuntariamente en ataques de denegación de servicio distribuido (DDoS).
+
+## 3\. Procedimientos Prácticos
+
+El documento describe una demostración práctica para configurar y administrar la seguridad de DNS. A continuación, se detallan los procedimientos principales.
+
+### **Acceso a la Consola de Administración de DNS**
+
+1.  Abrir el **Server Manager**.
+2.  Navegar a la sección de **Tools**.
+3.  Seleccionar la consola de **DNS**, tal como se ilustra en las capturas de pantalla.
+
+### **Creación de Registros de Host (A y AAAA)**
+
+1.  En la consola de DNS, seleccionar la zona de búsqueda directa del dominio (ej., Hackers.Academy).
+2.  Hacer clic derecho sobre la zona y elegir la opción **New Host (A or AAAA)**, como se muestra en la captura de pantalla.
+3.  En la ventana de "New Host", se ingresa un nombre para el host (ej., "serverweb") y su dirección IP.
+4.  Se puede marcar la opción para crear el registro de búsqueda inversa (PTR) correspondiente.
+5.  Hacer clic en **Add Host**.
+
+### **Creación de Registros de Alias (CNAME)**
+
+1.  En la consola de DNS, hacer clic derecho en la zona de dominio (ej., Hackers.Academy).
+2.  Seleccionar la opción **New Alias (CNAME)**.
+3.  En la nueva ventana, se introduce el nombre del alias (ej., "www").
+4.  Se selecciona el registro de host (tipo A) al que apuntará el alias, en este caso, "serverweb.hackers.academy", navegando a través de las zonas de búsqueda directa, como se muestra en las capturas.
+5.  Hacer clic en **OK**.
+
+### **Creación de una Nueva Zona**
+
+1.  En la consola de DNS, hacer clic derecho en **Forward Lookup Zones**.
+2.  Seleccionar **New Zone...**.
+3.  Se abre el asistente "New Zone Wizard". Se puede elegir entre crear una zona **Primary zone**, **Secondary zone** o **Stub zone**. Se explica que una zona secundaria es una copia de solo lectura.
+4.  Al crear una zona, se puede optar por integrarla en **Active Directory**.
+      * Si se selecciona esta opción, la replicación se hará de forma segura a través del protocolo de replicación de Active Directory.
+      * Si no se selecciona, se utilizará el sistema de replicación por zonas de transferencia del propio protocolo DNS.
+5.  Se elige un nombre para la zona (ej., "hola.com") y se finaliza el asistente.
+
+### **Configuración de DNS Cache Locking y RRL**
+
+El documento menciona que estas opciones se pueden configurar a través de la línea de comandos o Windows PowerShell.
+
+  * **Comando para Cache Locking:** `dnscmd /Config /CacheLockingPercent <percent>`.
+  * **PowerShell para Cache Locking:** `Set-DnsServerCache -LockingPercent <value>`.
+  * **Comandos para RRL:** `Set-DNSServerRRL` y `Get-DNSServerRRL | F.L.`.
+
+### **Firma de una Zona con DNSSEC**
+
+1.  En la consola de DNS, hacer clic derecho en la zona que se desea firmar (ej., "hola.com").
+2.  Navegar a **DNSSEC** y seleccionar **Sign the Zone...**.
+3.  Se abre el asistente "Zone Signing Wizard".
+4.  En la ventana de **Key Signing Key (KSK)**, se selecciona el algoritmo criptográfico y la longitud de la clave, y se hace clic en **Add** para configurar los parámetros, como se muestra en las capturas.
+5.  Seguir los pasos del asistente para firmar la zona.
+6.  Una vez firmada, al refrescar la zona, aparecerán nuevos registros relacionados con el sistema de claves públicas (DNSKEY, RRSIG, NSEC3, etc.), que respaldan la autenticación de los registros.
+
+## 4\. Conclusiones y Puntos Clave
+
+### **Importancia y Beneficios de Seguridad**
+
+El servicio DNS, aunque intrínsecamente inseguro en su protocolo base, es fundamental para cualquier organización, y su correcta administración es clave para aumentar la seguridad de toda la red. La implementación de medidas de seguridad como DNSSEC, políticas de DNS y RRL no solo protegen el servidor de ataques directos, sino que también evitan que sea utilizado involuntariamente para atacar a otras organizaciones. Los registros de actividad del DNS también son una fuente vital para detectar intrusiones y accesos no autorizados a la red.
+
+### **Puntos de Aprendizaje Clave**
+
+  * Se debe entender la diferencia entre las zonas de búsqueda directa e inversa, así como las opciones de replicación de zonas entre servidores DNS y su relación con Active Directory.
+  * Existen tecnologías integradas en Windows Server que permiten mitigar amenazas conocidas, como el DNS Cache Locking contra registros maliciosos persistentes y el DNS Socket Pool contra el spoofing.
+  * La firma de zonas con DNSSEC es una característica poderosa para proteger contra la falsificación de registros, proporcionando una infraestructura DNS más segura.
+  * Las políticas DNS ofrecen una capacidad avanzada para fortificar la resolución de servicios, permitiendo optimizar el rendimiento y filtrar peticiones maliciosas.
+  * RRL es una defensa crucial para evitar que los servidores DNS sean cómplices en ataques de denegación de servicio distribuido (DDoS), lo que ayuda a evitar implicaciones legales y económicas.
+
+### **Relevancia Técnica**
+
+La capacidad de administrar y configurar estas características de seguridad es de suma importancia en un entorno profesional. Un fallo en el servicio DNS o una mala configuración puede llevar a graves problemas, como la denegación de servicio o el envío de peticiones a máquinas no legítimas. Por tanto, los conocimientos sobre cómo implementar DNSSEC, configurar políticas, utilizar RRL y gestionar correctamente las zonas de replicación son fundamentales para un administrador de sistemas o un profesional de la ciberseguridad, asegurando una infraestructura de red robusta y resiliente.
