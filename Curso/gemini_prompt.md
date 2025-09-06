@@ -59,3 +59,23 @@ En referencia al XXXXXX, está genial, me encanta, pero quiero que seas más pre
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 En referencia al XXXXXX, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: deja la primera frase del documento de referencia, pero quita el resto de citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+Necesito tu ayuda para formatear y explicar un texto sobre XXXXXXXXXXXXXXX. He extraído el texto de la transcripción de un video, pero la explicación no es muy clara.
+
+Reescribe el texto que te proporcionaré para que sea entendible y fácil de recordar. No omitas nada de la información que te dé. El objetivo es que el resultado sea un resumen claro y bien estructurado que pueda usar en el futuro para repasar el tema.
+
+Por favor, formatea el texto de la siguiente manera:
+
+Título Principal: Un título claro y conciso sobre el tema.
+
+Subtítulos: Usa subtítulos para dividir el contenido en secciones lógicas.
+
+Párrafos y Listas: Utiliza párrafos explicativos y listas con viñetas para desglosar los pasos y conceptos clave.
+
+Negritas: Resalta los términos técnicos importantes para que destaquen.
+
+Analogías o Ejemplos: Incluye analogías o ejemplos sencillos para clarificar los conceptos más complejos, si es necesario.
+
+Confirma que estás listo para recibir el texto.
