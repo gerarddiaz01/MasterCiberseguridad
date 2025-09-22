@@ -1,4 +1,4 @@
-Documentos de Referencia: "AS-II - Escalada de privilegios en Windows.pdf"
+Documentos de Referencia: "AWEB - Introducción y Teoría.pdf"
 
 # Informe Técnico: Ataques en Auditorías de Aplicaciones Web y Estrategias de Defensa
 
