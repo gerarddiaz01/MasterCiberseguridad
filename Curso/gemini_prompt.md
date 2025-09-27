@@ -52,11 +52,12 @@ Esta sección debe ser completa y reflexiva. No te limites a un simple resumen. 
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
+REESCRIBIR PARRAFOS:
 
-
-En referencia al XXXXXX, está genial, me encanta, pero quiero que seas más preciso y me des mas información, utiliza el documento que te he dado para que el informe sea mucho más rico en información.
+Reescribe el siguiente texto sobre XXXXXXXX en mi máster ciberseguridad, para que sea más claro y fácil de entender, manteniendo toda la información original. No quiero un resumen; necesito una reestructuración completa que explique los conceptos de manera didáctica y ordenada. Si el texto incluye comandos, explica su sintaxis, sus elementos y su propósito en detalle. Enriquece las explicaciones para asegurar la máxima información posible, no dudes en añadir información y ejemplos prácticos. Si en el texto ves presentes procedimientos prácticos para explicar de manera visual la teoría, asegurate que está todo hecho paso a paso, explicado todo perfectamente en detalle, y si se utilizan comandos en la terminal, que la sintaxis de los comandos están explicados en profundidad. No elimined nada del texto, todo el contenido que te doy tiene que estar presente en ésta transcripción que te pido. Si tienes imágenes adjuntas con el texto, utilizalas en el momento adecuado del texto porque son importantes, Voy a poner la palabra IMAGEN en el texto para que sepas que allí va una imagen. Aqui tienes el texto:
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
+QUITAR FUENTES:
 
 En referencia al XXXXXX, está genial, me encanta, pero hay una cosa que puedes hacer sin modificar el contenido: deja la primera frase del documento de referencia, pero quita el resto de citas y referencias a los documentos fuente pero sin modificar nada más, dame el documento exactamente igual que antes excepto las citas. ej., ([cite: 139], [cite_start]).
 
