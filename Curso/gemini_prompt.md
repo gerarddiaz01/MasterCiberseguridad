@@ -54,7 +54,24 @@ Esta sección debe ser completa y reflexiva. No te limites a un simple resumen. 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 REESCRIBIR PARRAFOS:
 
-Reescribe el siguiente texto sobre XXXXXXXX en mi máster ciberseguridad, para que sea más claro y fácil de entender, manteniendo toda la información original. No quiero un resumen; necesito una reestructuración completa que explique los conceptos de manera didáctica y ordenada. Si el texto incluye comandos, explica su sintaxis, sus elementos y su propósito en detalle. Enriquece las explicaciones para asegurar la máxima información posible, no dudes en añadir información y ejemplos prácticos. Si en el texto ves presentes procedimientos prácticos para explicar de manera visual la teoría, asegurate que está todo hecho paso a paso, explicado todo perfectamente en detalle, y si se utilizan comandos en la terminal, que la sintaxis de los comandos están explicados en profundidad. No elimined nada del texto, todo el contenido que te doy tiene que estar presente en ésta transcripción que te pido. Si tienes imágenes adjuntas con el texto, utilizalas en el momento adecuado del texto porque son importantes, Voy a poner la palabra IMAGEN en el texto para que sepas que allí va una imagen. Aqui tienes el texto:
+Reescribe el siguiente texto sobre XXXXXXXX en mi máster ciberseguridad, para que sea más claro y fácil de entender, manteniendo toda la información original. No quiero un resumen; necesito una reestructuración completa que explique los conceptos de manera didáctica y ordenada. Si el texto incluye comandos, explica su sintaxis, sus elementos y su propósito en detalle. Enriquece las explicaciones para asegurar la máxima información posible, no dudes en añadir información y ejemplos prácticos. Si en el texto ves presentes procedimientos prácticos para explicar de manera visual la teoría, asegurate que está todo hecho paso a paso, explicado todo perfectamente en detalle, y si se utilizan comandos en la terminal, que la sintaxis de los comandos están explicados en profundidad. No elimined nada del texto, todo el contenido que te doy tiene que estar presente en ésta transcripción que te pido. Si tienes imágenes adjuntas con el texto, utilizalas en el momento adecuado del texto porque son importantes, Voy a poner la palabra IMAGEN en el texto para que sepas que allí va una imagen. No me pongas tablas ni explicaciones en tablas, todo por escrito. Aqui tienes el texto:
+
+**OBJETIVO:** Reestructurar completamente el texto sobre XXXXXXXXX para un máster en ciberseguridad.
+
+**REQUISITOS DE CONTENIDO:**
+1.  **Reestructuración Completa:** No es un resumen. El contenido debe ser reestructurado de manera didáctica, clara y ordenada, manteniendo **toda** la información original, sin dejarte nada. Quiero que revises y verifiques que ningun punto del texto ha sido obviado.
+2.  **Enriquecimiento Detallado:** Explicar los conceptos, la sintaxis y el propósito de los elementos en detalle. Añadir información y ejemplos prácticos para maximizar la comprensión.
+3.  **Comandos y Procedimientos:** Si hay comandos o procedimientos prácticos, explicarlos paso a paso, asegurando la explicación detallada de la sintaxis, elementos y propósito de cada comando en la terminal.
+4.  **Integridad de la Información:** Todo el contenido del texto original debe estar **presente** en la transcripción final. No se debe eliminar nada.
+
+**REQUISITOS DE FORMATO Y ESTRUCTURA:**
+1.  **Prosa Únicamente:** NO utilizaré tablas ni explicaciones en formato de tabla. Todo debe estar escrito en prosa.
+2.  **Uso de Imágenes:** Integrar las imágenes adjuntas en el momento adecuado del texto. Indicaré su posición con la etiqueta **<IMAGEN>**.
+3.  **Tono:** Claro, conciso y fácil de entender, adecuado para un contexto de máster.
+4. Repito, todo tiene que estar reestructurado didácticamente en prosa, sin ninguna tabla.
+
+**TEXTO A PROCESAR:**
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 QUITAR FUENTES:
