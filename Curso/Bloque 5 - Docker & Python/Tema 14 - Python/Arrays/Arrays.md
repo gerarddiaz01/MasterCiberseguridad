@@ -4,7 +4,7 @@
 
 Un módulo es un archivo con extensión `.py` que contiene código de Python reutilizable y que puede ser importado dentro de otro archivo de Python.
 
-### ⚡ **Importación de módulos**
+### **Importación de módulos**
 
 Para utilizar un módulo en Python, se usa la palabra clave `import`. Ejemplo:
 
@@ -15,11 +15,11 @@ print(math.sqrt(16)) # Salida: 4.0
 
 ## **Paquetes y Librerías**
 
-### 🔍 **Paquete (Package)**
+### **Paquete (Package)**
 
 Un paquete es un directorio que contiene varios módulos relacionados. Puede incluir subpaquetes y módulos.
 
-### 📚 **Librería (Library)**
+### **Librería (Library)**
 
 Una librería es un conjunto de módulos y paquetes que proporcionan funcionalidades específicas.
 Ejemplos:
@@ -27,13 +27,13 @@ Ejemplos:
 `matplotlib` (para visualización de datos)
 `pandas` (para manipulación de datos)
 
-## 📉 **Arrays en Python**
+## **Arrays en Python**
 
 ### **Definición**
 
 Un array es una colección ordenada de elementos del mismo tipo.
 
-### ⚖ **Diferencias entre Listas y Arrays**
+### **Diferencias entre Listas y Arrays**
 
 | Característica              | Listas                          | Arrays                      |
 | --------------------------- | ------------------------------- | --------------------------- |
@@ -55,7 +55,7 @@ mi_array = np.array([1, 2, 3, 4])
 print(mi_array * 2) # [2 4 6 8]
 ```
 
-## 🔬 **Módulo array**
+## **Módulo array**
 
 El módulo `array` viene incluido por defecto en Python.
 
@@ -132,7 +132,7 @@ print(array_2)
 # [1 2 3 4 5 6]
 ```
 
-## 🛠 Contar elementos distintos a cero en un array:
+## Contar elementos distintos a cero en un array:
 
 Usamos `np.count_nonzero()`.
 
@@ -175,7 +175,7 @@ Si aplicas estos índices al array original, obtienes el array ordenado:
 arr[indices_ordenados] # [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
 ```
 
-## 🛠 Contar elementos distintos a cero en un array (continuación):
+## Contar elementos distintos a cero en un array (continuación):
 
 ```python
 arr = np.array([1, 0, 2, 0, 3, 0])
@@ -191,7 +191,7 @@ En este ejemplo, el array `arr` contiene tres elementos distintos de cero (`1`, 
 
 No es necesario especificar el tipo de dato. NumPy permite realizar operaciones matemáticas de forma eficiente.
 
-### 📅 Instalación
+### Instalación
 
 Para instalar NumPy, usa:
 
@@ -199,7 +199,7 @@ Para instalar NumPy, usa:
 pip install numpy
 ```
 
-### ⚙ Creación de un array con numpy
+### Creación de un array con numpy
 
 No es necesario especificar el tipo de dato. Permite realizar operaciones matemáticas de forma eficiente.
 
@@ -258,7 +258,7 @@ print(matriz_3d)
 #   [7 8]]]
 ```
 
-⚠ Cuidado con `np.empty()`, sus valores iniciales son aleatorios.
+Cuidado con `np.empty()`, sus valores iniciales son aleatorios.
 
 Para crear arrays de ceros o unos:
 
@@ -293,7 +293,7 @@ print(eye_array_despl)
  [0. 1. 0.]]
 ```
 
-## 🖜 Concatenación de arrays
+## Concatenación de arrays
 
 La concatenación se refiere a unir dos o más arrays en uno solo. NumPy ofrece varias funciones para concatenar arrays:
 
@@ -462,7 +462,7 @@ Los algoritmos disponibles incluyen:
 * **heapsort** (ordenamiento por montículos).
 * **stable** (estable, alias de mergesort).
 
-## 🛠 `np.argsort()`: obtener índices para ordenar arrays
+## `np.argsort()`: obtener índices para ordenar arrays
 
 La función `np.argsort` de NumPy se utiliza para obtener los índices que ordenarían un array. En otras palabras, devuelve un array de índices que, si se aplican al array original, lo ordenarían en orden ascendente.
 
@@ -516,7 +516,7 @@ Obtendrás:
 [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
 ```
 
-## 🛠 Contar elementos distintos a cero en un array
+## Contar elementos distintos a cero en un array
 
 Usamos `np.count_nonzero()`.
 
